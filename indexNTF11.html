@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="cache-control" content="no-cache" />
+    <meta http-equiv="expires" content="0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1" />
+    <title>SDK Debug NTF11</title>
+    <!-- ↓↓↓ 必須ファイルの読込 ↓↓↓ -->
+	<script type="text/javascript" src="./script/ctrlrm.js" defer></script>
+    <script type="text/javascript" src="./script/analyzerm-s1t4u3.js" defer></script>
+    <link rel="stylesheet" href="./css/style.css" />
+    <!-- ↑↑↑ 必須ファイルの読込 ↑↑↑ -->
+    <script>
+        var analyzer = null;// カード解析処理
+
+ /****************************************************************
+  * カード解析処理制御設定
+  * この設定値は初期値です。必要に応じて有効化して値を設定して下さい
+  ****************************************************************/
+/*/ ↓↓↓ この変数は必要に応じて有効化して下さい ↓↓↓ */
+        var cardConf = {
+        /*
+            'touchWaitTime': 700,							// カード識別成功時に次のタッチを受け付けるまでのインターバル(msec)
+            'showErrorAlert': true,							// エラーアラート表示フラグ
+            'touchElement': 'touch',						// タッチを受け付ける要素(ID又は要素で指定)
+            'initModalElemId': 'init_modal',				// メディア読込用モーダルの要素のID
+            'initModalDoneElemId': 'init_modal_done',		// メディア読込用モーダルを閉じる(ボタン)要素のID
+            'defaultContentsId': 'default_contents',		// 初期表示要素のID
+            'variableContentsClass': '.variable_contents',	// 動的表示切替要素のクラス
+            'elemIdPrefix': 'i',							// カード識別後、遷移ではなくコンテンツを表示する際に使用。表示要素のID属性値に指定する接頭辞で「i」を指定したなら「id="i*"」の設定された要素が表示される(*の中は1〜3の数値でカードの上側持ち手から下に向けて1,2,3となる)、HTMLパートと合わせて実装を確認して下さい
+            'willStartCollbackKey': 'start',				// カード解析処理実行直前に呼ばれるコールバックに指定するキー名
+            'onErrorCallbackKey': 'error',					// カード解析処理失敗に呼ばれるコールバックに指定するキー名
+            'okSoundElemId': 'beep_ok',						// カードタッチ成功時効果音要素のID
+            'ngSoundElemId': 'beep_ng',						// カードタッチ失敗時効果音要素のID
+            'playSound': true,								// カードタッチ後に効果音を鳴らすか否かの設定(true:鳴らす、false:鳴らさない)
+            'commonErrorMsg': 'カードが認識出来ませんでした。',	// 汎用エラーメッセージ
+        //
+            'transitTouchWaitTime': 25,							// motion制御カード移動中の識別成功時に次のタッチを受け付けるまでのインターバル(msec)
+            'motionDetectNum' : [2,2,2,1,1,0,0],                //motion制御指定配列（配列の要素番号 0:motion制御有、1:下、2:上、3:左、4:右、5:右回転、6:左回転 の値を 閾値制御の場合 1 疑似アナログ制御の場合 2 にする。例えば、上下を閾値制御、左右回転をアナログ制御したい場合は、[2,1,1,0,0,2,2]と指定する）
+            //'motionDetectNum' : [1,0,1,1,1,0,0],              //motion制御指定配列（配列の要素番号 0:motion制御有、1:下、2:上、3:左、4:右、5:右回転、6:左回転 の値を 閾値制御の場合 1 疑似アナログ制御の場合 2 にする。例えば、上下を閾値制御、左右回転をアナログ制御したい場合は、[2,1,1,0,0,2,2]と指定する）
+            'motionThresholdGridX' : 1.5,                       //motion制御X方向grid幅閾値
+            'motionThresholdGridY' : 2,                         //motion制御Y方向grid幅閾値
+            'motionThresholdAngle' : 20,                        //motion制御回転角度閾値(unit: degree)
+            'cardIdNum' : ["T4-48"],                            //認証判定するID
+            //'cardIdNum' : [],                                 //認証判定するID = CONFV8 の全ての場合、HTMLのコールバック関数内でID一致判定すること
+            'accuracy' : 2 ,                                    //グリッド座標誤差許容範囲(unit: grid)
+            'yGridMax' : 14,                                    //Y方向Grid座標最大値(unit: grid)             
+            'xbasisGridDistance' : 10,                          //基準電極間X方向距離(unit: grid)            
+            'ybasisGridDistance' : 10,                          //基準電極間Y方向距離(unit: grid)            
+            'x1basisGridCoordinate' : 2,                        //基準電極1XGrid座標
+            'y1basisGridCoordinate' : 12,                       //基準電極1XGrid座標
+            'targetRad' : -0.7853981633974483                   //基準電極を結ぶ線分とX軸の角度(unit: radian)
+            'touchedClearInterval' : 200,						//タッチイベント終了後に蓄積している座標を初期化するまでのインターバル(msec)
+
+            */
+
+            //'touchElement': document,// <- 要素指定でタッチイベントを観測する例
+
+            'touchWaitTime': 700,							    // カード識別成功時に次のタッチを受け付けるまでのインターバル(msec)
+            'fixPosition' : false,                               //動作判定、タッチ方向判定時のpositionの戻り値制御、false : position=analyze.point , true : position=1 cardId = cardId + "-" + analyze.point
+            'rotationDetect' : 1,                               //rotation判定指定配列（0:rotation判定無、1:rotation判定有、{判定有の場合、タッチパネルX座標軸の＋方向ベクトルと基準電極原点側から遠端側に向かうベクトルのなす角0°：callback.point=1、90°：2、180°：3、270°：4}とする。）
+            'motionDetectNum' : [1,-1,1,1,1,1,1,1],                //motion制御指定配列（配列の要素番号 0:motion制御有、1:設定なし(-1固定)、2:下、3:上、4:左、5:右、6:右回転、7:左回転 の値を 閾値制御の場合 1 疑似アナログ制御の場合 2 にする。例えば、上下を閾値制御、左右回転をアナログ制御したい場合は、[2,1,1,0,0,2,2]と指定する）
+            //'motionDetectNum' : [1,1,1,1,1,1,1],                //motion制御指定配列（配列の要素番号 0:motion制御有、1:下、2:上、3:左、4:右、5:右回転、6:左回転 の値を 閾値制御の場合 1 疑似アナログ制御の場合 2 にする。例えば、上下を閾値制御、左右回転をアナログ制御したい場合は、[2,1,1,0,0,2,2]と指定する）
+            'cardIdNum' : ["S1-1306","S1-57","S1-582"],                            //認証判定するID
+
+            //'touchedClearInterval' : 100,						//タッチイベント終了後に蓄積している座標を初期化するまでのインターバル(msec)
+	        //'rotationThresholdAngle' : 30,                      	//rotation判定角度閾値(unit: degree)		20250305
+
+            //'transitTouchWaitTime': 20,							//motion制御カード移動中の識別成功時に次のタッチを受け付けるまでのインターバル(msec)
+            //'motionThresholdAngle' : 20,                        //motion制御回転角度閾値(unit: degree)
+            //'motionThresholdGridX' : 1,                       //motion制御X方向grid幅閾値
+            //'motionThresholdGridY' : 1,                         //motion制御Y方向grid幅閾値
+                    
+        };
+        /*/ ↑↑↑ この変数は必要に応じて有効化して下さい ↑↑↑ */
+
+
+        // カード解析時に呼ばれる処理群
+        var callbacks = {
+            /* カード解析開始直前に呼ばれる処理 */
+            'start': function() { // cardConf.willStartCollbackKey: function() {
+                /* 必要に応じて処理を実装 */
+                document.getElementById('name').style.backgroundColor = "#baffab";           //5point揃って解析中は、表題の背景色を変える
+
+                console.log('start_analyze');
+            },
+        
+            /* S1系カードでタッチした時に呼ばれる処理 */
+            // ID認証 'position番号' = '1'　設定：cardConf.rotationDetect = 0, cardConf.motionDetectNum[0] = 0 (デフォルト設定)
+            '1': function(cardId) {                                     //ID認証した場合
+                resultData = 'RN=1, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text1").innerHTML=resultData;
+		        return true;
+            },
+            //
+
+            // タッチ方向判定 'position番号' = '10'〜'40'　設定：cardConf.rotationDetect = 1, cardConf.motionDetectNum[0] = 0
+            '10': function(cardId) {                                     //タッチ方向：前向き(0度)　でID認証した場合
+                resultData = 'RN=10, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text10").innerHTML=resultData;
+		        return true;
+            },
+            '20': function(cardId) {                                     //タッチ方向：右向き(90度)　でID認証した場合
+                resultData = 'RN=20 '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text20").innerHTML=resultData;
+		        return true;
+            },
+            '30': function(cardId) {                                     //タッチ方向：後向き(180度)　でID認証した場合
+                resultData = 'RN=30, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text30").innerHTML=resultData;
+		        return true;
+            },
+            '40': function(cardId) {                                     //タッチ方向：左向き(270度)　でID認証した場合
+                resultData = 'RN=40, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text40").innerHTML=resultData;
+		        return true;
+            },
+            //
+
+            // 動作判定 'position番号' = '2'〜'7'　設定：cardConf.rotationDetect = 0, cardConf.motionDetectNum[0] = 1 又は 2
+            '2': function(cardId) {                                     //画面下方向に13.4mm(2grid)程度移動検知　でID認証した場合
+                resultData = 'RN=2, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text2").innerHTML=resultData;
+		        return true;
+            },
+            '3': function(cardId) {                                     //画面上方向に13.4mm(2grid)程度移動検知　でID認証した場合
+                resultData = 'RN=3, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text3").innerHTML=resultData;
+		        return true;
+            },
+            '4': function(cardId) {                                     //画面右方向に10.1mm(1.5grid)程度移動検知　でID認証した場合
+                resultData = 'RN=4, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text4").innerHTML=resultData;
+		        return true;
+            },
+            '5': function(cardId) {                                     //画面左方向に10.1mm(1.5grid)程度移動検知　でID認証した場合
+                resultData = 'RN=5, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text5").innerHTML=resultData;
+		        return true;
+            },
+            '6': function(cardId) {                                     //左回りで20度以上回転検知　でID認証した場合
+                resultData = 'RN=6, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text6").innerHTML=resultData;
+		        return true;
+            },
+            '7': function(cardId) {                                     //右回りで20度以上回転検知　でID認証した場合
+                resultData = 'RN=7, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text7").innerHTML=resultData;
+		        return true;
+            },
+            //
+
+            // タッチ方向判定×動作判定 'position番号' = '12'〜'47'　設定：cardConf.rotationDetect = 1, cardConf.motionDetectNum[0] = 1 又は 2
+            '12': function(cardId) {                                     //タッチ方向：前向き(0度)かつ、面下方向に13.4mm(2grid)程度移動検知　でID認証した場合
+                resultData = 'RN=12, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text12").innerHTML=resultData;
+		        return true;
+            },
+            '13': function(cardId) {                                     //タッチ方向：前向き(0度)かつ、面上方向に13.4mm(2grid)程度移動検知　でID認証した場合
+                resultData = 'RN=13, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text13").innerHTML=resultData;
+		        return true;
+            },
+            '14': function(cardId) {                                     //タッチ方向：前向き(0度)かつ、画面右方向に10.1mm(1.5grid)程度移動検知　でID認証した場合
+                resultData = 'RN=14, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text14").innerHTML=resultData;
+		        return true;
+            },
+            '15': function(cardId) {                                     //タッチ方向：前向き(0度)かつ、画面左方向に10.1mm(1.5grid)程度移動検知　でID認証した場合
+                resultData = 'RN=15, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text15").innerHTML=resultData;
+		        return true;
+            },
+            '16': function(cardId) {                                     //タッチ方向：前向き(0度)かつ、左回りで20度以上回転検知　でID認証した場合
+                resultData = 'RN=16, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text16").innerHTML=resultData;
+		        return true;
+            },
+            '17': function(cardId) {                                     //タッチ方向：前向き(0度)かつ、右回りで20度以上回転検知　でID認証した場合
+                resultData = 'RN=17, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text17").innerHTML=resultData;
+		        return true;
+            },
+
+            '22': function(cardId) {                                     //タッチ方向：右向き(90度)かつ、面下方向に13.4mm(2grid)程度移動検知　でID認証した場合
+                resultData = 'RN=22, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text22").innerHTML=resultData;
+		        return true;
+            },
+            '23': function(cardId) {                                     //タッチ方向：右向き(90度)かつ、面上方向に13.4mm(2grid)程度移動検知　でID認証した場合
+                resultData = 'RN=23, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text23").innerHTML=resultData;
+		        return true;
+            },
+            '24': function(cardId) {                                     //タッチ方向：右向き(90度)かつ、画面右方向に10.1mm(1.5grid)程度移動検知　でID認証した場合
+                resultData = 'RN=24, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text24").innerHTML=resultData;
+		        return true;
+            },
+            '25': function(cardId) {                                     //タッチ方向：右向き(90度)かつ、画面左方向に10.1mm(1.5grid)程度移動検知　でID認証した場合
+                resultData = 'RN=25, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text25").innerHTML=resultData;
+		        return true;
+            },
+            '26': function(cardId) {                                     //タッチ方向：右向き(90度)かつ、左回りで20度以上回転検知　でID認証した場合
+                resultData = 'RN=26, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text26").innerHTML=resultData;
+		        return true;
+            },
+            '27': function(cardId) {                                     //タッチ方向：右向き(90度)かつ、右回りで20度以上回転検知　でID認証した場合
+                resultData = 'RN=27, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text27").innerHTML=resultData;
+		        return true;
+            },
+
+            '32': function(cardId) {                                     //タッチ方向：後向き(180度)かつ、面下方向に13.4mm(2grid)程度移動検知　でID認証した場合
+                resultData = 'RN=32, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text32").innerHTML=resultData;
+		        return true;
+            },
+            '33': function(cardId) {                                     //タッチ方向：後向き(180度)かつ、面上方向に13.4mm(2grid)程度移動検知　でID認証した場合
+                resultData = 'RN=33, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text33").innerHTML=resultData;
+		        return true;
+            },
+            '34': function(cardId) {                                     //タッチ方向：後向き(180度)かつ、画面右方向に10.1mm(1.5grid)程度移動検知　でID認証した場合
+                resultData = 'RN=34, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text34").innerHTML=resultData;
+		        return true;
+            },
+            '35': function(cardId) {                                     //タッチ方向：後向き(180度)かつ、画面左方向に10.1mm(1.5grid)程度移動検知　でID認証した場合
+                resultData = 'RN=35, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text35").innerHTML=resultData;
+		        return true;
+            },
+            '36': function(cardId) {                                     //タッチ方向：後向き(180度)かつ、左回りで20度以上回転検知　でID認証した場合
+                resultData = 'RN=36, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text36").innerHTML=resultData;
+		        return true;
+            },
+            '37': function(cardId) {                                     //タッチ方向：後向き(180度)かつ、右回りで20度以上回転検知　でID認証した場合
+                resultData = 'RN=37, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text37").innerHTML=resultData;
+		        return true;
+            },
+
+            '42': function(cardId) {                                     //タッチ方向：左向き(270度)かつ、面下方向に13.4mm(2grid)程度移動検知　でID認証した場合
+                resultData = 'RN=42, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text42").innerHTML=resultData;
+		        return true;
+            },
+            '43': function(cardId) {                                     //タッチ方向：左向き(270度)かつ、面上方向に13.4mm(2grid)程度移動検知　でID認証した場合
+                resultData = 'RN=43, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text43").innerHTML=resultData;
+		        return true;
+            },
+            '44': function(cardId) {                                     //タッチ方向：左向き(270度)かつ、画面右方向に10.1mm(1.5grid)程度移動検知　でID認証した場合
+                resultData = 'RN=44, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text44").innerHTML=resultData;
+		        return true;
+            },
+            '45': function(cardId) {                                     //タッチ方向：左向き(270度)かつ、画面左方向に10.1mm(1.5grid)程度移動検知　でID認証した場合
+                resultData = 'RN=45, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text45").innerHTML=resultData;
+		        return true;
+            },
+            '46': function(cardId) {                                     //タッチ方向：左向き(270度)かつ、左回りで20度以上回転検知　でID認証した場合
+                resultData = 'RN=46, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text46").innerHTML=resultData;
+		        return true;
+            },
+            '47': function(cardId) {                                     //タッチ方向：左向き(270度)かつ、右回りで20度以上回転検知　でID認証した場合
+                resultData = 'RN=47, '+ cardId + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(1)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(1)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(1)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(1));
+                console.log(resultData);
+                document.getElementById(cardId + "_" + "i1text47").innerHTML=resultData;
+		        return true;
+            },
+            //
+           
+            
+            /* カード解析エラー発生時に呼ばれる処理 */
+            'error': function(errorCode, errorMessage, errorId) { // _cardConf.onErrorCallbackKey: function(errorCode, errorMessage, errorId) {
+                /*
+                 * errorCode 0: 正常, 1: 識別エラー, 3: 処理エラー
+                 * エラーコードが1の場合は無視しても問題ないが3の場合は処理に何らかの不具合が発生した場合となるので要状況確認
+                 * ※ エラー発生時に「analyzer.stop();」でタッチイベントの観測を停止させる事も可能
+                 * errorIdに値がある時は解析結果が不完全(カード自体は識別できたが持ち手が識別できなかった場合)
+                 */
+                /* 必要に応じて処理を実装 */
+                document.getElementById('name').style.backgroundColor = "#baffab";           //5point揃って解析中は、表題の背景色を変える
+
+                console.log('[' + analyzer.getErrorMessage(errorCode) + ']', errorMessage, errorId," , rX= - , rY= - , rA= -");
+
+            }
+        };
+        
+        /* 即時関数で環境確認 */
+        var isPassive = false;	// パッシブ対応か否かを判定した結果を格納する
+        (function() {
+            try { 
+                var options = Object.defineProperty({}, 'passive', { get: function() { isPassive = true; } });  
+                window.addEventListener('test', options, options);  
+                window.removeEventListener('test', options, options); 
+            } catch (exception) { 
+                isPassive = false; 
+            }
+        })();
+        
+        /* 各要素展開完了時にカードタッチ待受処理開始 */
+        var readyFunc = function(e) {
+            if (typeof initCtrl !== 'undefined') {
+                analyzer = initCtrl(callbacks, cardConf);
+                //analyzer.enableScrollAction = true;// ←1本指での操作を許容する場合はコメントアウトを解除(スクロール、対象を要素にした場合はクリックイベントにも影響有り)
+            }
+            console.log(e);             //20250423
+        };
+        
+        /* 読込完了イベントを設定 */
+        (function(){
+	        window.addEventListener('DOMContentLoaded', readyFunc, isPassive ? {passive: false, capture: false} : false);
+        })();
+
+        window.addEventListener('pageshow', function(event){ if(event.persisted) { location.reload();}});   //20251020  ブラウザの戻るボタンで戻った場合、リロードする
+
+    </script>
+        
+</head>
+        
+<body>
+
+	<!-- デフォルトコンテンツ(初期表示) -->
+	<div id="default_contents">
+		<div data-role="page">
+			<div data-role="content" id="main_contents">
+                <h1 id="name" style="background-color:transparent;">TEST</h1>
+				<div id="resizeimage">
+					<img id="ccard1" class="ccard img_contents" src="./img/touch.png" alt="main_image" />
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+	<!-- ↓↓↓ 別ページに遷移しない場合の実装例(別ページに画面遷移する場合は不要) ↓↓↓ -->
+	<!-- 表示コンテンツ カードID毎にcardIDをidとしたコンテンツブロックを記述する		  -->
+	<div id="S1-1306_i1" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF00</h1><p id="S1-1306_i1text1" style="font-size: 5vw;">S1-1306, id=1</p></div>
+	<div id="S1-57_i1" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF00</h1><p id="S1-57_i1text1" style="font-size: 5vw;">S1-57, id=1</p></div>
+	<div id="S1-582_i1" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF00</h1><p id="S1-582_i1text1" style="font-size: 5vw;">S1-582, id=1</p></div>
+		
+	<div id="S1-1306_i2" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF01</h1><p id="S1-1306_i1text2" style="font-size: 5vw;">S1-1306, id=2</p></div>
+	<div id="S1-57_i2" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF01</h1><p id="S1-57_i1text2" style="font-size: 5vw;">S1-57, id=2</p></div>
+	<div id="S1-582_i2" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF01</h1><p id="S1-582_i1text2" style="font-size: 5vw;">S1-582, id=2</p></div>
+	<div id="S1-1306_i3" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF01</h1><p id="S1-1306_i1text3" style="font-size: 5vw;">S1-1306, id=3</p></div>
+	<div id="S1-57_i3" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF01</h1><p id="S1-57_i1text3" style="font-size: 5vw;">S1-57, id=3</p></div>
+	<div id="S1-582_i3" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF01</h1><p id="S1-582_i1text3" style="font-size: 5vw;">S1-582, id=3</p></div>
+	<div id="S1-1306_i4" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF01</h1><p id="S1-1306_i1text4" style="font-size: 5vw;">S1-1306, id=4</p></div>
+	<div id="S1-57_i4" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF01</h1><p id="S1-57_i1text4" style="font-size: 5vw;">S1-57, id=4</p></div>
+	<div id="S1-582_i4" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF01</h1><p id="S1-582_i1text4" style="font-size: 5vw;">S1-582, id=4</p></div>
+	<div id="S1-1306_i5" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF01</h1><p id="S1-1306_i1text5" style="font-size: 5vw;">S1-1306, id=5</p></div>
+	<div id="S1-57_i5" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF01</h1><p id="S1-57_i1text5" style="font-size: 5vw;">S1-57, id=5</p></div>
+	<div id="S1-582_i5" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF01</h1><p id="S1-582_i1text5" style="font-size: 5vw;">S1-582, id=5</p></div>
+	<div id="S1-1306_i6" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF01</h1><p id="S1-1306_i1text6" style="font-size: 5vw;">S1-1306, id=6</p></div>
+	<div id="S1-57_i6" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF01</h1><p id="S1-57_i1text6" style="font-size: 5vw;">S1-57, id=6</p></div>
+	<div id="S1-582_i6" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF01</h1><p id="S1-582_i1text6" style="font-size: 5vw;">S1-582, id=6</p></div>
+	<div id="S1-1306_i7" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF01</h1><p id="S1-1306_i1text7" style="font-size: 5vw;">S1-1306, id=7</p></div>
+	<div id="S1-57_i7" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF01</h1><p id="S1-57_i1text7" style="font-size: 5vw;">S1-57, id=7</p></div>
+	<div id="S1-582_i7" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF01</h1><p id="S1-582_i1text7" style="font-size: 5vw;">S1-582, id=7</p></div>
+
+    <div id="S1-1306_i10" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF10</h1><p id="S1-1306_i1text10" style="font-size: 5vw;">S1-1306, id=10</p></div>
+	<div id="S1-57_i10" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF10</h1><p id="S1-57_i1text10" style="font-size: 5vw;">S1-57, id=10</p></div>
+	<div id="S1-582_i10" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF10</h1><p id="S1-582_i1text10" style="font-size: 5vw;">S1-582, id=10</p></div>
+    <div id="S1-1306_i20" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF10</h1><p id="S1-1306_i1text20" style="font-size: 5vw;">S1-1306, id=20</p></div>
+	<div id="S1-57_i20" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF10</h1><p id="S1-57_i1text20" style="font-size: 5vw;">S1-57, id=20</p></div>
+	<div id="S1-582_i20" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF10</h1><p id="S1-582_i1text20" style="font-size: 5vw;">S1-582, id=20</p></div>
+    <div id="S1-1306_i30" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF10</h1><p id="S1-1306_i1text30" style="font-size: 5vw;">S1-1306, id=30</p></div>
+	<div id="S1-57_i30" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF10</h1><p id="S1-57_i1text30" style="font-size: 5vw;">S1-57, id=30</p></div>
+	<div id="S1-582_i30" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF10</h1><p id="S1-582_i1text30" style="font-size: 5vw;">S1-582, id=30</p></div>
+    <div id="S1-1306_i40" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF10</h1><p id="S1-1306_i1text40" style="font-size: 5vw;">S1-1306, id=40</p></div>
+	<div id="S1-57_i40" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF10</h1><p id="S1-57_i1text40" style="font-size: 5vw;">S1-57, id=40</p></div>
+	<div id="S1-582_i40" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF10</h1><p id="S1-582_i1text40" style="font-size: 5vw;">S1-582, id=40</p></div>
+
+	<div id="S1-1306_i12" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text12" style="font-size: 5vw;">S1-1306, id=12</p></div>
+	<div id="S1-57_i12" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text12" style="font-size: 5vw;">S1-57, id=12</p></div>
+	<div id="S1-582_i12" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text12" style="font-size: 5vw;">aaa</p></div>
+	<div id="S1-1306_i13" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text13" style="font-size: 5vw;">S1-1306, id=13</p></div>
+	<div id="S1-57_i13" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text13" style="font-size: 5vw;">S1-57, id=13</p></div>
+	<div id="S1-582_i13" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text13" style="font-size: 5vw;">S1-582, id=13</p></div>
+	<div id="S1-1306_i14" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text14" style="font-size: 5vw;">S1-1306, id=14</p></div>
+	<div id="S1-57_i14" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text14" style="font-size: 5vw;">S1-57, id=14</p></div>
+	<div id="S1-582_i14" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text14" style="font-size: 5vw;">S1-582, id=14</p></div>
+	<div id="S1-1306_i15" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text15" style="font-size: 5vw;">S1-1306, id=15</p></div>
+	<div id="S1-57_i15" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text15" style="font-size: 5vw;">S1-57, id=15</p></div>
+	<div id="S1-582_i15" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text15" style="font-size: 5vw;">S1-582, id=15</p></div>
+	<div id="S1-1306_i16" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text16" style="font-size: 5vw;">S1-1306, id=16</p></div>
+	<div id="S1-57_i16" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text16" style="font-size: 5vw;">S1-57, id=16</p></div>
+	<div id="S1-582_i16" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text16" style="font-size: 5vw;">S1-582, id=16</p></div>
+	<div id="S1-1306_i17" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text17" style="font-size: 5vw;">S1-1306, id=17</p></div>
+	<div id="S1-57_i17" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text17" style="font-size: 5vw;">S1-57, id=17</p></div>
+	<div id="S1-582_i17" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text17" style="font-size: 5vw;">S1-582, id=17</p></div>
+	<div id="S1-1306_i22" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text22" style="font-size: 5vw;">S1-1306, id=22</p></div>
+	<div id="S1-57_i22" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text22" style="font-size: 5vw;">S1-57, id=22</p></div>
+	<div id="S1-582_i22" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text22" style="font-size: 5vw;">S1-582, id=22</p></div>
+	<div id="S1-1306_i23" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text23" style="font-size: 5vw;">S1-1306, id=23</p></div>
+	<div id="S1-57_i23" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text23" style="font-size: 5vw;">S1-57, id=23</p></div>
+	<div id="S1-582_i23" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text23" style="font-size: 5vw;">S1-582, id=23</p></div>
+	<div id="S1-1306_i24" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text24" style="font-size: 5vw;">S1-1306, id=24</p></div>
+	<div id="S1-57_i24" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text24" style="font-size: 5vw;">S1-57, id=24</p></div>
+	<div id="S1-582_i24" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text24" style="font-size: 5vw;">S1-582, id=24</p></div>
+	<div id="S1-1306_i25" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text25" style="font-size: 5vw;">S1-1306, id=25</p></div>
+	<div id="S1-57_i25" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text25" style="font-size: 5vw;">S1-57, id=25</p></div>
+	<div id="S1-582_i25" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text25" style="font-size: 5vw;">S1-582, id=25</p></div>
+	<div id="S1-1306_i26" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text26" style="font-size: 5vw;">S1-1306, id=26</p></div>
+	<div id="S1-57_i26" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text26" style="font-size: 5vw;">S1-57, id=26</p></div>
+	<div id="S1-582_i26" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text26" style="font-size: 5vw;">S1-582, id=26</p></div>
+	<div id="S1-1306_i27" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text27" style="font-size: 5vw;">S1-1306, id=27</p></div>
+	<div id="S1-57_i27" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text27" style="font-size: 5vw;">S1-57, id=27</p></div>
+	<div id="S1-582_i27" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text27" style="font-size: 5vw;">S1-582, id=27</p></div>
+	<div id="S1-1306_i32" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text32" style="font-size: 5vw;">S1-1306, id=32</p></div>
+	<div id="S1-57_i32" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text32" style="font-size: 5vw;">S1-57, id=32</p></div>
+	<div id="S1-582_i32" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text32" style="font-size: 5vw;">S1-582, id=32</p></div>
+	<div id="S1-1306_i33" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text33" style="font-size: 5vw;">S1-1306, id=33</p></div>
+	<div id="S1-57_i33" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text33" style="font-size: 5vw;">S1-57, id=33</p></div>
+	<div id="S1-582_i33" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text33" style="font-size: 5vw;">S1-582, id=33</p></div>
+	<div id="S1-1306_i34" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text34" style="font-size: 5vw;">S1-1306, id=34</p></div>
+	<div id="S1-57_i34" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text34" style="font-size: 5vw;">S1-57, id=34</p></div>
+	<div id="S1-582_i34" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text34" style="font-size: 5vw;">S1-582, id=34</p></div>
+	<div id="S1-1306_i35" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text35" style="font-size: 5vw;">S1-1306, id=35</p></div>
+	<div id="S1-57_i35" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text35" style="font-size: 5vw;">S1-57, id=35</p></div>
+	<div id="S1-582_i35" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text35" style="font-size: 5vw;">S1-582, id=35</p></div>
+	<div id="S1-1306_i36" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text36" style="font-size: 5vw;">S1-1306, id=36</p></div>
+	<div id="S1-57_i36" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text36" style="font-size: 5vw;">S1-57, id=36</p></div>
+	<div id="S1-582_i36" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text36" style="font-size: 5vw;">S1-582, id=36</p></div>
+	<div id="S1-1306_i37" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text37" style="font-size: 5vw;">S1-1306, id=37</p></div>
+	<div id="S1-57_i37" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text37" style="font-size: 5vw;">S1-57, id=37</p></div>
+	<div id="S1-582_i37" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text37" style="font-size: 5vw;">S1-582, id=37</p></div>
+	<div id="S1-1306_i42" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text42" style="font-size: 5vw;">S1-1306, id=42</p></div>
+	<div id="S1-57_i42" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text42" style="font-size: 5vw;">S1-57, id=42</p></div>
+	<div id="S1-582_i42" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text42" style="font-size: 5vw;">S1-582, id=42</p></div>
+	<div id="S1-1306_i43" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text43" style="font-size: 5vw;">S1-1306, id=43</p></div>
+	<div id="S1-57_i43" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text43" style="font-size: 5vw;">S1-57, id=43</p></div>
+	<div id="S1-582_i43" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text43" style="font-size: 5vw;">S1-582, id=43</p></div>
+	<div id="S1-1306_i44" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text44" style="font-size: 5vw;">S1-1306, id=44</p></div>
+	<div id="S1-57_i44" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text44" style="font-size: 5vw;">S1-57, id=44</p></div>
+	<div id="S1-582_i44" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text44" style="font-size: 5vw;">S1-582, id=44</p></div>
+	<div id="S1-1306_i45" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text45" style="font-size: 5vw;">S1-1306, id=45</p></div>
+	<div id="S1-57_i45" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text45" style="font-size: 5vw;">S1-57, id=45</p></div>
+	<div id="S1-582_i45" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text45" style="font-size: 5vw;">S1-582, id=45</p></div>
+	<div id="S1-1306_i46" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text46" style="font-size: 5vw;">S1-1306, id=46</p></div>
+	<div id="S1-57_i46" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text46" style="font-size: 5vw;">S1-57, id=46</p></div>
+	<div id="S1-582_i46" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text46" style="font-size: 5vw;">S1-582, id=46</p></div>
+	<div id="S1-1306_i47" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-1306_i1text47" style="font-size: 5vw;">S1-1306, id=47</p></div>
+	<div id="S1-57_i47" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-57_i1text47" style="font-size: 5vw;">S1-57, id=47</p></div>
+	<div id="S1-582_i47" class="variable_contents"><h1 id="name" style="background-color:transparent;">SDK Debug NTF11</h1><p id="S1-582_i1text47" style="font-size: 5vw;">S1-582, id=47</p></div>
+
+
+<!-- ↓↓↓ 効果音(使用する場合cardConf.okSoundElemId|cardConf.ngSoundElemIdの値とid属性値を合わせる事) ↓↓↓ -->
+<div id="callback_audio">
+    <audio src="./res/beeps/pass.mp3" id="beep_ok"></audio>
+    <audio src="./res/beeps/warning.mp3" id="beep_ng"></audio>
+</div>
+<!-- ↑↑↑ 効果音(使用する場合cardConf.okSoundElemId|cardConf.ngSoundElemIdの値とid属性値を合わせる事) ↑↑↑ -->
+
+
+<!-- ↓↓↓ 効果音初期化用モーダル(この要素を定義しない場合効果音は再生されない) ↓↓↓ -->
+<div id="init_modal">
+	<div id="init_modal_box">
+		<div id="init_modal_title">Let's Try!!</div>
+		<div id="init_modal_message">マルチタッチカードで画面にタッチして下さい</div>
+		<div id="init_modal_done">OK</div>
+	</div>
+</div>
+<!-- ↑↑↑ 効果音初期化用モーダル(この要素を定義しない場合効果音は再生されない) ↑↑↑ -->
+
+</body>
+</html>

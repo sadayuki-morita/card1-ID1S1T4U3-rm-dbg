@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="format-detection" content="telephone=no">
+<title>IDcode gen</title>
+
+<script type="text/javascript" src="./script/c/cms1allEnconfv8.js"></script>
+
+</head>
+<body>
+    <h1>IDエンコードCONFV8配列 jsファイル作成</h1>
+<p>作成したいID番号を下記の欄に S1-599,S1-586,S1-105 のようにスペースを入れずにカンマで区切って入力してください。<br>
+        入力したファイル名で、ダウンロードフォルダにファイルが作成されます。</p>
+    <form id="inputForm">
+
+        <label for="id">ID:</label>
+        <input type="text" id="id" value='S1-123,S1-456'><br>
+        <label for="filename">file name:</label>
+        <input type="text" id="filename" value="cs1"><br>
+
+        <button type="button" onclick="createFile()">ファイル作成</button>
+    </form>
+
+    <p id="fileNameDisplay"></p>
+
+    <script>
+
+        //console.log(ENCODV8);
+
+        function createFile() {
+
+            var Base64 = {
+            
+                    encode: function (str) {
+                    // 文字列 → UTF-8バイト列 → バイナリ文字列 → Base64文字列
+                    const bytes = new TextEncoder().encode(str);
+                    let binary = '';
+                    bytes.forEach(b => binary += String.fromCharCode(b));
+                    return btoa(binary);
+                    },
+
+                    decode: function (b64str) {
+                    // Base64 → バイナリ文字列 → バイト列 → UTF-8文字列
+                    const binary = atob(b64str);
+                    const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+                    return new TextDecoder().decode(bytes);
+                    }
+            };
+
+            // 各入力欄の値を取得
+            const id = document.getElementById('id').value ;
+            const cardIdNum = id.split(",");
+            const fileName = document.getElementById('filename').value;
+
+            console.log('cardIdNum= ' ,cardIdNum);
+            console.log('fileName= ' ,fileName);
+
+
+            // ファイル名を作成
+            document.getElementById('fileNameDisplay').innerText = "ファイル名: " + fileName + '.js';
+
+            // ファイルの内容を作成
+                let arryDataE =[];
+                let arryDataD =[];
+
+                for (let ix0=0; ix0 < cardIdNum.length; ix0++) {
+                    console.log('cardIdNum[' + ix0 + ']= "' + cardIdNum[ix0] +'",' );
+                    for (let ix1=0; ix1 < ENCODV8.length; ix1++) {
+                        if(cardIdNum[ix0] === ENCODV8[ix1].split(":")[0]) {
+                            let row=Base64.encode(ENCODV8[ix1]);
+                            arryDataE.push(row);
+                            break;
+                        }
+                    }
+                }
+
+                //
+                console.log(arryDataE);
+                //
+                for (let ix1=0; ix1 < arryDataE.length; ix1++) {
+                    let row=Base64.decode(arryDataE[ix1]);
+                    //console.log(row);
+                    arryDataD.push(row);
+                }
+                //
+                console.log(arryDataD);
+                //
+
+            const fileContent = 'var CONFV8 = [\n"' + arryDataE.join('",\n"') + '"\n];'; // 配列を改行で結合してファイル内容を作成
+
+            // ブラウザでファイルを作成してダウンロード
+            const blob = new Blob([fileContent], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName + '.js';
+            link.click();
+        }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="cache-control" content="no-cache" />
+    <meta http-equiv="expires" content="0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1" />
+    <title>SDK Debug FT01</title>
+    <!-- ↓↓↓ 必須ファイルの読込 ↓↓↓ -->
+	<script type="text/javascript" src="./script/ctrlrm.js" defer></script>
+    <script type="text/javascript" src="./script/analyzerm-s1t4u3.js" defer></script>
+    <link rel="stylesheet" href="./css/style.css" />
+    <!-- ↑↑↑ 必須ファイルの読込 ↑↑↑ -->
+    <script>
+        var analyzer = null;// カード解析処理
+
+ /****************************************************************
+  * カード解析処理制御設定
+  * この設定値は初期値です。必要に応じて有効化して値を設定して下さい
+  ****************************************************************/
+/*/ ↓↓↓ この変数は必要に応じて有効化して下さい ↓↓↓ */
+var cardConf = {
+        /*
+            'touchWaitTime': 700,							// カード識別成功時に次のタッチを受け付けるまでのインターバル(msec)
+            'showErrorAlert': true,							// エラーアラート表示フラグ
+            'touchElement': 'touch',						// タッチを受け付ける要素(ID又は要素で指定)
+            'initModalElemId': 'init_modal',				// メディア読込用モーダルの要素のID
+            'initModalDoneElemId': 'init_modal_done',		// メディア読込用モーダルを閉じる(ボタン)要素のID
+            'defaultContentsId': 'default_contents',		// 初期表示要素のID
+            'variableContentsClass': '.variable_contents',	// 動的表示切替要素のクラス
+            'elemIdPrefix': 'i',							// カード識別後、遷移ではなくコンテンツを表示する際に使用。表示要素のID属性値に指定する接頭辞で「i」を指定したなら「id="i*"」の設定された要素が表示される(*の中は1〜3の数値でカードの上側持ち手から下に向けて1,2,3となる)、HTMLパートと合わせて実装を確認して下さい
+            'willStartCollbackKey': 'start',				// カード解析処理実行直前に呼ばれるコールバックに指定するキー名
+            'onErrorCallbackKey': 'error',					// カード解析処理失敗に呼ばれるコールバックに指定するキー名
+            'okSoundElemId': 'beep_ok',						// カードタッチ成功時効果音要素のID
+            'ngSoundElemId': 'beep_ng',						// カードタッチ失敗時効果音要素のID
+            'playSound': true,								// カードタッチ後に効果音を鳴らすか否かの設定(true:鳴らす、false:鳴らさない)
+            'commonErrorMsg': 'カードが認識出来ませんでした。',	// 汎用エラーメッセージ
+        //
+            'transitTouchWaitTime': 25,							// motion制御カード移動中の識別成功時に次のタッチを受け付けるまでのインターバル(msec)
+            'motionDetectNum' : [2,2,2,1,1,0,0],                //motion制御指定配列（配列の要素番号 0:motion制御有、1:下、2:上、3:左、4:右、5:右回転、6:左回転 の値を 閾値制御の場合 1 疑似アナログ制御の場合 2 にする。例えば、上下を閾値制御、左右回転をアナログ制御したい場合は、[2,1,1,0,0,2,2]と指定する）
+            //'motionDetectNum' : [1,0,1,1,1,0,0],              //motion制御指定配列（配列の要素番号 0:motion制御有、1:下、2:上、3:左、4:右、5:右回転、6:左回転 の値を 閾値制御の場合 1 疑似アナログ制御の場合 2 にする。例えば、上下を閾値制御、左右回転をアナログ制御したい場合は、[2,1,1,0,0,2,2]と指定する）
+            'motionThresholdGridX' : 1.5,                       //motion制御X方向grid幅閾値
+            'motionThresholdGridY' : 2,                         //motion制御Y方向grid幅閾値
+            'motionThresholdAngle' : 20,                        //motion制御回転角度閾値(unit: degree)
+            'cardIdNum' : ["T4-48"],                            //認証判定するID
+            //'cardIdNum' : [],                                 //認証判定するID = CONFV8 の全ての場合、HTMLのコールバック関数内でID一致判定すること
+            'accuracy' : 2 ,                                    //グリッド座標誤差許容範囲(unit: grid)
+            'yGridMax' : 14,                                    //Y方向Grid座標最大値(unit: grid)             
+            'xbasisGridDistance' : 10,                          //基準電極間X方向距離(unit: grid)            
+            'ybasisGridDistance' : 10,                          //基準電極間Y方向距離(unit: grid)            
+            'x1basisGridCoordinate' : 2,                        //基準電極1XGrid座標
+            'y1basisGridCoordinate' : 12,                       //基準電極1XGrid座標
+            'targetRad' : -0.7853981633974483                   //基準電極を結ぶ線分とX軸の角度(unit: radian)
+            'touchedClearInterval' : 200,						//タッチイベント終了後に蓄積している座標を初期化するまでのインターバル(msec)
+
+            */
+
+
+            'touchWaitTime': 700,							    // カード識別成功時に次のタッチを受け付けるまでのインターバル(msec)
+            'fixPosition' : true,                               //動作判定、タッチ方向判定時のpositionの戻り値制御、false : position=analyze.point , true : position=1 cardId = cardId + "-" + analyze.point
+            'rotationDetect' : 0,                               //rotation判定指定配列（0:rotation判定無、1:rotation判定有、{判定有の場合、タッチパネルX座標軸の＋方向ベクトルと基準電極原点側から遠端側に向かうベクトルのなす角0°：callback.point=1、90°：2、180°：3、270°：4}とする。）
+            'motionDetectNum' : [1,-1,1,1,1,1,1,1],                //motion制御指定配列（配列の要素番号 0:motion制御有、1:設定なし(-1固定)、2:下、3:上、4:左、5:右、6:右回転、7:左回転 の値を 閾値制御の場合 1 疑似アナログ制御の場合 2 にする。例えば、上下を閾値制御、左右回転をアナログ制御したい場合は、[2,1,1,0,0,2,2]と指定する）
+            //'motionDetectNum' : [1,1,1,1,1,1,1],                //motion制御指定配列（配列の要素番号 0:motion制御有、1:下、2:上、3:左、4:右、5:右回転、6:左回転 の値を 閾値制御の場合 1 疑似アナログ制御の場合 2 にする。例えば、上下を閾値制御、左右回転をアナログ制御したい場合は、[2,1,1,0,0,2,2]と指定する）
+            'cardIdNum' : [],                                   //認証判定するID
+
+    };
+    /*/ ↑↑↑ この変数は必要に応じて有効化して下さい ↑↑↑ */
+
+        // カード解析時に呼ばれる処理群
+        var callbacks = {
+            /* カード解析開始直前に呼ばれる処理 */
+            'start': function() { // cardConf.willStartCollbackKey: function() {
+                /* 必要に応じて処理を実装 */
+                document.getElementById('name').style.backgroundColor = "#baffab";           //5point揃って解析中は、表題の背景色を変える
+
+                console.log('start_analyze');
+            },
+
+            /* S1系カードでタッチした時に呼ばれる処理 */
+            '1': function(cardId) {                                     //画面下に14mm程度移動検知した場合
+
+                document.getElementById('name').style.backgroundColor = "#baffab";           //5point揃って解析中は、表題の背景色を変える
+
+                let resultData = 'RN=1, '+ cardId + ", r= " + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(2)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(2)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(2)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(2))+ ", T= " + parseFloat(_cardAnalyzer.motionAnalogOut[3].toFixed(2));
+                console.log(resultData);
+
+                analyzer.stop();             //20251020  URL遷移する場合、analyzerを止めておく。（ブラウザの戻るで戻ってきた時に以前の認証動作が継続しないようにするため）
+
+                let index='',idNum='',positionNum='';
+                if(cardConf.fixPosition){
+                    index = cardId.indexOf("-", cardId.indexOf("-") + 1);		//cardIdの先頭から２つ目の"-"の先頭文字からの位置を算出
+                    if(index === -1) {                                          //"-"が1個の場合
+                        idNum=cardId;
+                        positionNum= 1;
+                    } else {
+                        positionNum= cardId.slice(index + 1);						//コールバックポジション
+                        idNum=cardId.slice(0, index);								//ID番号                   
+                    }      
+                } else {
+                    idNum=cardId;
+                    positionNum= 1;
+                }
+                console.log("idNum=",idNum,", positionNum=",positionNum); 
+
+                let url='';
+                var beepTimeOut = setTimeout(function() {
+
+                    if(cardId){
+                        url='indexURLparam.html' + '?param1='+ idNum + '&param2='+ positionNum;  
+                    }
+
+                    location.href = url;
+			        //window.location.assign(url);			//20250818
+		        }, cardConf.touchWaitTime);
+		        return false;          //{'pageCtrl': false, 'restart': true};
+                /* ↑↑↑URL遷移する場合の実装 falseを返却↑↑↑ */
+            },
+
+            /* カード解析エラー発生時に呼ばれる処理 */
+            'error': function(errorCode, errorMessage, errorId) { // _cardConf.onErrorCallbackKey: function(errorCode, errorMessage, errorId) {
+                /*
+                * errorCode 0: 正常, 1: 識別エラー, 3: 処理エラー
+                * エラーコードが1の場合は無視しても問題ないが3の場合は処理に何らかの不具合が発生した場合となるので要状況確認
+                * ※ エラー発生時に「analyzer.stop();」でタッチイベントの観測を停止させる事も可能
+                * errorIdに値がある時は解析結果が不完全(カード自体は識別できたが持ち手が識別できなかった場合)
+                */
+                /* 必要に応じて処理を実装 */
+                document.getElementById('name').style.backgroundColor = "transparent";           //解析中に表題の背景色を変えたものを透明に戻す
+
+                console.log('[' + analyzer.getErrorMessage(errorCode) + ']', errorMessage, errorId," , rX= - , rY= - , rA= -");
+
+            }
+        };
+
+        /* 即時関数で環境確認 */
+        var isPassive = false;	// パッシブ対応か否かを判定した結果を格納する
+        (function() {
+            try { 
+                var options = Object.defineProperty({}, 'passive', { get: function() { isPassive = true; } });  
+                window.addEventListener('test', options, options);  
+                window.removeEventListener('test', options, options); 
+            } catch (exception) { 
+                isPassive = false; 
+            }
+        })();
+
+        /* 各要素展開完了時にカードタッチ待受処理開始 */
+        var readyFunc = function(e) {
+            if (typeof initCtrl !== 'undefined') {
+                analyzer = initCtrl(callbacks, cardConf);
+                //analyzer.enableScrollAction = true;// ←1本指での操作を許容する場合はコメントアウトを解除(スクロール、対象を要素にした場合はクリックイベントにも影響有り)
+            }
+        };
+
+        /* 読込完了イベントを設定 */
+        (function(){
+	        window.addEventListener('DOMContentLoaded', readyFunc, isPassive ? {passive: false, capture: false} : false);
+        })();
+
+        window.addEventListener('pageshow', function(event){ if(event.persisted) { location.reload();}});   //20251020  ブラウザの戻るボタンで戻った場合、リロードする
+
+    </script>
+
+</head>
+
+<body>
+	<!-- デフォルトコンテンツ(初期表示) -->
+	<div id="default_contents">
+		<div data-role="page">
+			<div data-role="content" id="main_contents">
+                <h1 id="name" style="background-color:transparent;">SDK Debug</h1>
+                <h2 id="name2" style="background-color:transparent;">rtn= false, fixp= true, rot=0, mot=1</h2>
+				<div id="resizeimage">
+					<img id="ccard1" class="ccard img_contents" src="./img/touch.png" alt="main_image" />
+				</div>
+			</div>
+		</div>
+	</div>
+
+    <!-- ↓↓↓ 効果音(使用する場合cardConf.okSoundElemId|cardConf.ngSoundElemIdの値とid属性値を合わせる事) ↓↓↓ -->
+    <div id="callback_audio">
+        <audio src="./res/beeps/pass.mp3" id="beep_ok"></audio>
+        <audio src="./res/beeps/warning.mp3" id="beep_ng"></audio>
+    </div>
+    <!-- ↑↑↑ 効果音(使用する場合cardConf.okSoundElemId|cardConf.ngSoundElemIdの値とid属性値を合わせる事) ↑↑↑ -->
+
+
+    <!-- ↓↓↓ 効果音初期化用モーダル(この要素を定義しない場合効果音は再生されない) ↓↓↓ -->
+    <div id="init_modal">
+        <div id="init_modal_box">
+            <div id="init_modal_title">Let's Try!!</div>
+            <div id="init_modal_message">マルチタッチカードで画面にタッチして下さい</div>
+            <div id="init_modal_done">OK</div>
+        </div>
+    </div>
+    <!-- ↑↑↑ 効果音初期化用モーダル(この要素を定義しない場合効果音は再生されない) ↑↑↑ -->
+
+</body>
+</html>

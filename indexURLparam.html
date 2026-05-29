@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="cache-control" content="no-cache" />
+<meta http-equiv="expires" content="0" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1" />
+<title>SDK Debug ID=URL param</title>
+<link rel="stylesheet" href="./css/style.css" />
+<script>
+  // file:///path/to/your/file.html?param1=value1&param2=valueA&param3=X&param4=foo
+
+  // URLパラメータを取得する関数
+  function getParameterByName(name, url) {
+    if (!url) url = window.location.href;
+      name = name.replace(/[[\]]/g, "\\$&");
+      var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+      results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+  }
+
+  // ページの読み込み時に実行される関数
+  function onPageLoad() {
+    var param1Value = getParameterByName('param1');
+    var param2Value = getParameterByName('param2');
+    var param3Value = getParameterByName('param3');
+    var param4Value = getParameterByName('param4');
+
+    // パラメータの値によってテキストを変更
+    if (param1Value && param2Value && param3Value ) {
+      document.getElementById('i1text').innerText = 'ID=' + param1Value + ', position='+ param2Value+ ', cardIdNum='+ param3Value;
+    } else if (param1Value && param2Value ) {
+      document.getElementById('i1text').innerText = 'ID=' + param1Value + ', position='+ param2Value;
+    } else if (param1Value ) {
+      document.getElementById('i1text').innerText = 'ID=' + param1Value + ', position= 無し';
+    } else {
+      document.getElementById('i1text').innerText = 'ID, position= 無し';
+    }
+
+  }
+
+  
+</script>
+</head>
+
+<body onload="onPageLoad()">
+  <div id="contents">	
+    <h1 id="name" style="background-color:transparent;">SDK Debug</h1>
+       <h2 id="name2" style="background-color:transparent;">ID get URLparam</h2>
+    <p id="i1text" style="font-size: 5vw;"></p>	
+  </div>
+</body>
+</html>

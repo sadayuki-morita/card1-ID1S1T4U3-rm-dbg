@@ -1,0 +1,12 @@
+{
+  "compact": true,
+  "renameGlobals": true,
+  "stringArray": true,
+  "stringArrayEncoding": ["base64"],
+  "stringArrayThreshold": 0.5,
+  "controlFlowFlattening": false,
+  "deadCodeInjection": false,
+  "selfDefending": false,
+  "debugProtection": false,
+  "reservedNames": ["^Analyze$","^cardConfMap$","^convertConf$","^analyzeCard$","^MTCardConfig$"]
+}
