@@ -39,42 +39,42 @@
  * Rev.3.2.5	20260520
  * 		デモページのsrc共通化、管理見直しによるディレクトリ構成の見直し、SDKのディレクトリ構造とデモ、デバッグ用のディレクトリ構造の整合性を取るため、HTMLでidSerise定義必要。
  * Rev.3.2.6	20260529
- * 		デモ用ディレクトリ構成とSDK、その他のディレクトリ構成の共用化、デモ用ディレクトリは、HTML先頭で derectoryPass を指定する必要がある。
- * 		derectoryPassが定義されていない場合は、デフォルトで"./script"を読み込むようにしている。
+ * 		デモ用ディレクトリ構成とSDK、その他のディレクトリ構成の共用化、デモ用ディレクトリは、HTML先頭で directoryPass を指定する必要がある。
+ * 		directoryPassが定義されていない場合は、デフォルトで"./script"を読み込むようにしている。
  * 
 /**
  * 外部ファイルの読み込み
 */
 
-/* ------------- SKDベースの場合とデモ、デバッグ評価等のソースの場合のデイレクトリ構造、読み込みファイルの設定　20260520 */
+/* ------------- SKDベースの場合とデモ、デバッグ評価等のソースの場合のディレクトリ構造、読み込みファイルの設定　20260520 */
 //デモページのsrc共通化、管理見直しによるディレクトリ構成の見直し　20260518
-//デモ用ディレクトリ構成とSDK、その他のディレクトリ構成の共用化、デモ用ディレクトリは、HTML先頭で derectoryPass を指定する必要がある。20260529
+//デモ用ディレクトリ構成とSDK、その他のディレクトリ構成の共用化、デモ用ディレクトリは、HTML先頭で directoryPass を指定する必要がある。20260529
 
-if(typeof derectoryPass === "undefined"){derectoryPass = "./script";}		//HTMLでderectoryPassが定義されていない場合のデフォルト値設定 20260529
+if(typeof directoryPass === "undefined"){directoryPass = "./script";}		//HTMLでdirectoryPassが定義されていない場合のデフォルト値設定 20260529
 
-let srcCardrmFile = derectoryPass + "/cardrm-s1t4u3-ob.js";
+let srcCardrmFile = directoryPass + "/cardrm-s1t4u3-ob.js";
 let srcIdFile;
 
 if(typeof idSerise=== "undefined"){							//SKDのソースの場合、phpファイルを設定　20260128 ディレクトリ構成見直し 20260518
 	idSerise="";
-	srcIdFile= derectoryPass + "/c/cs1.php";
-	srcCardrmFile= derectoryPass + "/cardrm-s1t4u3-ob.php";
+	srcIdFile= directoryPass + "/c/cs1.php";
+	srcCardrmFile= directoryPass + "/cardrm-s1t4u3-ob.php";
 } else if(idSerise === "ALL"){
-	srcIdFile= derectoryPass + "/c/cms1allv4.js";                                //アクスタ2次試作導電パターン180度回転対応  20250516
+	srcIdFile= directoryPass + "/c/cms1allv4.js";                                //アクスタ2次試作導電パターン180度回転対応  20250516
 	idSerise="S1";
 } else if(idSerise === "ID1"){
-	srcIdFile= derectoryPass + "/c/cv8all.js";
+	srcIdFile= directoryPass + "/c/cv8all.js";
 } else if(idSerise === "T4"){
-	srcIdFile= derectoryPass + "/c/ct4all.js";
+	srcIdFile= directoryPass + "/c/ct4all.js";
 } else if(idSerise === "U1"){
-	srcIdFile= derectoryPass + "/c/cu1all.js";
+	srcIdFile= directoryPass + "/c/cu1all.js";
 } else if(idSerise === "U3"){
-	srcIdFile= derectoryPass + "/c/cu3all.js";
+	srcIdFile= directoryPass + "/c/cu3all.js";
 } else if(idSerise === "S1"){
-	srcIdFile= derectoryPass + "/c/cs1.js";
+	srcIdFile= directoryPass + "/c/cs1.js";
 } else {
 	idSerise="S1";	
-	srcIdFile= derectoryPass + "/c/cs1.js";
+	srcIdFile= directoryPass + "/c/cs1.js";
 }
 	console.log("idSerise= ",idSerise,", srcIdFile= ",srcIdFile, ", srcCardrmFile= ",srcCardrmFile);		//20260519
 
