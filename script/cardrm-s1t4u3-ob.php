@@ -3,7 +3,7 @@
  * エンジン解析ファイル
  * JavaScriptとしてヘッダーと内容を出力
  */
-
+/** SDKで使用する場合は、以下のコードを有効にして、func.phpを読み込んでください。
 // 必須ファイルの読み込み
 $confPath	= realpath("../f/func.php");
 if (file_exists($confPath)) {
@@ -18,7 +18,7 @@ $enable = isEnableAccess();
 if (!$enable) {
 	exit404();
 }
-
+*/
 /**
  * キャッシュさせない制御をする場合のヘッダー
  * 今回は基本的にキャッシュさせたいのでブラウザに任せる
