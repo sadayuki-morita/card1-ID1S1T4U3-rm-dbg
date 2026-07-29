@@ -271,9 +271,12 @@ var analyzeCard=function(inputPoints, group) {
 		    //------------- 20260121 タッチ座標解析
             if(typeof touchAnalysisEnable=== "undefined"){touchAnalysisEnable=false;}								//touchAnalysisEnable未定義HTML対応
 
-            if(touchAnalysisEnable){ 
+            if(touchAnalysisEnable){
+                touchDataArry.push([]); 
+                //console.log("touchDataArry.length=",touchDataArry.length,"points.length=",points.length);
                 for (let ix4=0; ix4 < points.length; ix4++) {
-                    touchDataArry.push([ix4,cardId,rotateRad,baseRad,centroidX,centroidY,gridHeight,gridWidth,points[ix4].inputX,points[ix4].inputY,points[ix4].gridX,points[ix4].gridY,points[ix4].rotateX,points[ix4].rotateY,points[ix4].timestamp,points[ix4].type,points[ix4].no,points[ix4].identifier,points.length]);
+                    touchDataArry[touchDataArry.length - 1].push([]);
+                    touchDataArry[touchDataArry.length - 1][ix4].push([cardId,rotateRad,baseRad,centroidX,centroidY,gridHeight,gridWidth,points[ix4].inputX,points[ix4].inputY,points[ix4].gridX,points[ix4].gridY,points[ix4].rotateX,points[ix4].rotateY,points[ix4].timestamp,points[ix4].type,points[ix4].no,points[ix4].identifier,points.length]);
                 }
             }
             //-------------

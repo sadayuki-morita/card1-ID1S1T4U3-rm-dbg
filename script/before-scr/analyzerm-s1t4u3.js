@@ -60,7 +60,8 @@ if(typeof idSerise=== "undefined"){							//SKDのソースの場合、phpファ
 	srcIdFile= directoryPass + "/c/cs1.php";
 	srcCardrmFile= directoryPass + "/cardrm-s1t4u3-ob.php";
 } else if(idSerise === "ALL"){
-	srcIdFile= directoryPass + "/c/cms1allv4.js";                                //アクスタ2次試作導電パターン180度回転対応  20250516
+	srcIdFile= directoryPass + "/c/cms1allv4.js";                                	//アクスタ2次試作導電パターン180度回転対応  20250516
+	srcCardrmFile = directoryPass + "/cardrm-s1t4u3.js";							//アナライザデバッグ用
 	idSerise="S1";
 } else if(idSerise === "ID1"){
 	srcIdFile= directoryPass + "/c/cv8all.js";
@@ -734,9 +735,11 @@ var Analyze = function (callback, willStart, onError) {
 		}
 		    //------------- 20260127 タッチ座標解析
             if(typeof touchAnalysisEnable=== "undefined"){touchAnalysisEnable=false;}								//touchAnalysisEnable未定義HTML対応
-            if(touchAnalysisEnable && tp.length < self.pointNumMax){ 
+            if(touchAnalysisEnable && tp.length < self.pointNumMax){
+				touchDataArry.push([]); 
                 for (let ix4=0; ix4 < tp.length; ix4++) {
-                    touchDataArry.push([ix4,0,0,0,0,0,0,0,tp[ix4].inputX,tp[ix4].inputY,0,0,0,0,tp[ix4].timestamp,tp[ix4].type,tp[ix4].no,tp[ix4].id,tp.length]);
+					touchDataArry[touchDataArry.length - 1].push([]);
+                    touchDataArry[touchDataArry.length - 1][ix4].push([0,0,0,0,0,0,0,tp[ix4].inputX,tp[ix4].inputY,0,0,0,0,tp[ix4].timestamp,tp[ix4].type,tp[ix4].no,tp[ix4].id,tp.length]);
                 }
             }
             //-------------
@@ -869,16 +872,24 @@ var Analyze = function (callback, willStart, onError) {
 						elem.style.pointerEvents = 'auto';
 					}
 					if (self.passive) {
-						elem.addEventListener('touchstart', self.startListner, {passive: false, capture: false});  elem.addEventListener('touchmove', self.moveListner, {passive: false, capture: false});
-						elem.addEventListener('touchend', self.endListner, {passive: false, capture: false});  elem.addEventListener('touchcancel', self.cancelListner, {passive: false, capture: false});
+						elem.addEventListener('touchstart', self.startListner, {passive: false, capture: false});  
+						elem.addEventListener('touchmove', self.moveListner, {passive: false, capture: false});
+						elem.addEventListener('touchend', self.endListner, {passive: false, capture: false});  
+						elem.addEventListener('touchcancel', self.cancelListner, {passive: false, capture: false});
 						if ('ongesturestart' in window) {
-							document.addEventListener('gesturestart', self.zoomCancel, {passive: false, capture: false});  document.addEventListener('gesturechange', self.zoomCancel, {passive: false, capture: false});  document.addEventListener('gestureend', self.zoomCancel, {passive: false, capture: false});
+							document.addEventListener('gesturestart', self.zoomCancel, {passive: false, capture: false});  
+							document.addEventListener('gesturechange', self.zoomCancel, {passive: false, capture: false});  
+							document.addEventListener('gestureend', self.zoomCancel, {passive: false, capture: false});
 						}
 					} else {
-						elem.addEventListener('touchstart', self.startListner, false);  elem.addEventListener('touchmove', self.moveListner, false);
-						elem.addEventListener('touchend', self.endListner, false);  elem.addEventListener('touchcancel', self.cancelListner, false);
+						elem.addEventListener('touchstart', self.startListner, false);  
+						elem.addEventListener('touchmove', self.moveListner, false);
+						elem.addEventListener('touchend', self.endListner, false);  
+						elem.addEventListener('touchcancel', self.cancelListner, false);
 						if ('ongesturestart' in window) {
-							document.addEventListener('gesturestart', self.zoomCancel, false);  document.addEventListener('gesturechange', self.zoomCancel, false);  document.addEventListener('gestureend', self.zoomCancel, false);
+							document.addEventListener('gesturestart', self.zoomCancel, false);  
+							document.addEventListener('gesturechange', self.zoomCancel, false);  
+							document.addEventListener('gestureend', self.zoomCancel, false);
 						}
 					}
 				}
@@ -901,16 +912,24 @@ var Analyze = function (callback, willStart, onError) {
 			var elem = (typeof element === 'string') ? document.getElementById(element) : element;
 			if (elem) {
 				if (self.passive) {
-					elem.removeEventListener('touchstart', self.startListner, {passive: false, capture: false});  elem.removeEventListener('touchmove', self.moveListner, {passive: false, capture: false});
-					elem.removeEventListener('touchend', self.endListner, {passive: false, capture: false});  elem.removeEventListener('touchcancel', self.cancelListner, {passive: false, capture: false});
+					elem.removeEventListener('touchstart', self.startListner, {passive: false, capture: false});  
+					elem.removeEventListener('touchmove', self.moveListner, {passive: false, capture: false});
+					elem.removeEventListener('touchend', self.endListner, {passive: false, capture: false});  
+					elem.removeEventListener('touchcancel', self.cancelListner, {passive: false, capture: false});
 					if ('ongesturestart' in window) {
-						document.removeEventListener('gesturestart', self.zoomCancel, {passive: false, capture: false});  document.removeEventListener('gesturechange', self.zoomCancel, {passive: false, capture: false});  document.removeEventListener('gestureend', self.zoomCancel, {passive: false, capture: false});
+						document.removeEventListener('gesturestart', self.zoomCancel, {passive: false, capture: false});  
+						document.removeEventListener('gesturechange', self.zoomCancel, {passive: false, capture: false});  
+						document.removeEventListener('gestureend', self.zoomCancel, {passive: false, capture: false});
 					}
 				} else {
-					elem.removeEventListener('touchstart', self.startListner, false);  elem.removeEventListener('touchmove', self.moveListner, false);
-					elem.removeEventListener('touchend', self.endListner, false);  elem.removeEventListener('touchcancel', self.cancelListner, false);
+					elem.removeEventListener('touchstart', self.startListner, false);  
+					elem.removeEventListener('touchmove', self.moveListner, false);
+					elem.removeEventListener('touchend', self.endListner, false);  
+					elem.removeEventListener('touchcancel', self.cancelListner, false);
 					if ('ongesturestart' in window) {
-						document.removeEventListener('gesturestart', self.zoomCancel, false);  document.removeEventListener('gesturechange', self.zoomCancel, false);  document.removeEventListener('gestureend', self.zoomCancel, false);
+						document.removeEventListener('gesturestart', self.zoomCancel, false);  
+						document.removeEventListener('gesturechange', self.zoomCancel, false);  
+						document.removeEventListener('gestureend', self.zoomCancel, false);
 					}
 				}
 				if (elem !== document) {
