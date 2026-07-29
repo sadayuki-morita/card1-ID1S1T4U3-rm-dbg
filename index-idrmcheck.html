@@ -11,12 +11,12 @@
     <script>
         // SDKベースの場合このscriptは不要で、index.htmlでidSeriseを定義しない。
         // デバッグ評価等のSDKベースではないソースの場合は、このscriptでidSeriseを定義すること。
-        let directoryPass = "./script";		//デモ用ディレクトリ構成とSDK、その他のディレクトリ構成の共用化、デモ用ディレクトリは、HTML先頭で directoryPass を指定する必要がある。20260529
-        //let idSerise = prompt("ID系列を入力してください。","S1");   //認証IDファイル設定 "ALL"=(S1+ID1), "S1" or "ID1" or "T4" or "U3" or "U1" のどれかを必ず指定すること。   
-        let idSerise="ALL";                             //アナライザデバッグ用、認証IDファイル設定
+        //let directoryPass = "./script";		//デモ用ディレクトリ構成とSDK、その他のディレクトリ構成の共用化、デモ用ディレクトリは、HTML先頭で directoryPass を指定する必要がある。20260529
+        let idSerise = prompt("ID系列を入力してください。","S1");   //認証IDファイル設定 "ALL"=(S1+ID1), "S1" or "ID1" or "T4" or "U3" or "U1" のどれかを必ず指定すること。   
+        //let idSerise="ALL";                             //アナライザデバッグ用、認証IDファイル設定
         //----------    20260121 タッチ座標解析
-        var touchAnalysisEnable= true,      //タッチ座標解析用データ取得フラグ：取得する＝true（巨大な座標データのCVSファイルがアップロードされる）、取得しない＝false
-            touchDataArry =[];              //20260121 touchID毎の座標を格納する配列 
+        //var touchAnalysisEnable= true,      //タッチ座標解析用データ取得フラグ：取得する＝true（巨大な座標データのCVSファイルがアップロードされる）、取得しない＝false
+        //    touchDataArry =[];              //20260121 touchID毎の座標を格納する配列 
         //----------
 
     </script>
