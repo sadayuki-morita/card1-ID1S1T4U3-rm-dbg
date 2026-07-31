@@ -35,11 +35,7 @@
         /*/ ↓↓↓ この変数は必要に応じて有効化 ↓↓↓ */
         var cardConf = {
         /*
-            'touchWaitTime': 700,							// カード識別成功時に次のタッチを受け付けるまでのインターバル(msec)
-            'showErrorAlert': true,							// エラーアラート表示フラグ
             'touchElement': 'touch',						// タッチを受け付ける要素(ID又は要素で指定)
-            'initModalElemId': 'init_modal',				// メディア読込用モーダルの要素のID
-            'initModalDoneElemId': 'init_modal_done',		// メディア読込用モーダルを閉じる(ボタン)要素のID
             'defaultContentsId': 'default_contents',		// 初期表示要素のID
             'variableContentsClass': '.variable_contents',	// 動的表示切替要素のクラス
             'elemIdPrefix': 'i',							// カード識別後、遷移ではなくコンテンツを表示する際に使用。表示要素のID属性値に指定する接頭辞で「i」を指定したなら「id="i*"」の設定された要素が表示される(*の中は1〜3の数値でカードの上側持ち手から下に向けて1,2,3となる)、HTMLパートと合わせて実装を確認して下さい
@@ -48,26 +44,11 @@
             'okSoundElemId': 'beep_ok',						// カードタッチ成功時効果音要素のID
             'ngSoundElemId': 'beep_ng',						// カードタッチ失敗時効果音要素のID
             'playSound': true,								// カードタッチ後に効果音を鳴らすか否かの設定(true:鳴らす、false:鳴らさない)
-            'commonErrorMsg': 'カードが認識出来ませんでした。',	// 汎用エラーメッセージ
-        //
-            'transitTouchWaitTime': 25,							// motion制御カード移動中の識別成功時に次のタッチを受け付けるまでのインターバル(msec)
-            'motionDetectNum' : [2,2,2,1,1,0,0],                //motion制御指定配列（配列の要素番号 0:motion制御有、1:下、2:上、3:左、4:右、5:右回転、6:左回転 の値を 閾値制御の場合 1 疑似アナログ制御の場合 2 にする。例えば、上下を閾値制御、左右回転をアナログ制御したい場合は、[2,1,1,0,0,2,2]と指定する）
-            //'motionDetectNum' : [1,0,1,1,1,0,0],              //motion制御指定配列（配列の要素番号 0:motion制御有、1:下、2:上、3:左、4:右、5:右回転、6:左回転 の値を 閾値制御の場合 1 疑似アナログ制御の場合 2 にする。例えば、上下を閾値制御、左右回転をアナログ制御したい場合は、[2,1,1,0,0,2,2]と指定する）
-            'motionThresholdGridX' : 1.5,                       //motion制御X方向grid幅閾値
-            'motionThresholdGridY' : 2,                         //motion制御Y方向grid幅閾値
-            'motionThresholdAngle' : 20,                        //motion制御回転角度閾値(unit: degree)
-            'cardIdNum' : ["T4-48"],                            //認証判定するID
-            //'cardIdNum' : [],                                 //認証判定するID = CONFV8 の全ての場合、HTMLのコールバック関数内でID一致判定すること
-            'accuracy' : 2 ,                                    //グリッド座標誤差許容範囲(unit: grid)
-            'yGridMax' : 14,                                    //Y方向Grid座標最大値(unit: grid)             
-            'xbasisGridDistance' : 10,                          //基準電極間X方向距離(unit: grid)            
-            'ybasisGridDistance' : 10,                          //基準電極間Y方向距離(unit: grid)            
-            'x1basisGridCoordinate' : 2,                        //基準電極1XGrid座標
-            'y1basisGridCoordinate' : 12,                       //基準電極1XGrid座標
-            'targetRad' : -0.7853981633974483                   //基準電極を結ぶ線分とX軸の角度(unit: radian)
-            'touchedClearInterval' : 200,						//タッチイベント終了後に蓄積している座標を初期化するまでのインターバル(msec)
-
-            */
+            'motionDetectNum' : [0,0,0,0,0,0,0,0],          // motion制御指定配列（配列の要素番号 0:motion制御有、1:設定なし(0 or -1固定)、2:下、3:上、4:左、5:右、6:右回転、7:左回転 の値を 閾値制御の場合 1 疑似アナログ制御の場合 2 にする。例えば、上下を閾値制御、左右回転をアナログ制御したい場合は、[2,-1,1,1,0,0,2,2]と指定する）
+            'fixPosition' : false,                          // 動作判定、タッチ方向判定時のpositionの戻り値制御、false : position=analyze.point , true : position=1 cardId = cardId + "-" + analyze.point　＊動作判定、タッチ方向判定無しの場合、true/false関係なく callbacks['1']で、cardId = ID番号となる。
+            'rotationDetect' : 0,                           // rotation判定指定配列（0:rotation判定無、1:rotation判定有、{判定有の場合、タッチパネルX座標軸の＋方向ベクトルと基準電極原点側から遠端側に向かうベクトルのなす角0°：callback.point=1、90°：2、180°：3、270°：4}とする。）
+            'cardIdNum' : [],                               // 認証判定するID = CONFV8 の全ての場合、HTMLのコールバック関数内でID一致判定すること
+        */
 
             //'touchElement': document,// <- 要素指定でタッチイベントを観測する例
 
@@ -171,10 +152,6 @@
             if (typeof initCtrl !== 'undefined') {
                 analyzer = initCtrl(callbacks, cardConf);
                 //analyzer.enableScrollAction = true;// ←1本指での操作を許容する場合はコメントアウトを解除(スクロール、対象を要素にした場合はクリックイベントにも影響有り)
-
-                for (let ix4=0; ix4 < points.length; ix4++) {
-                    console.log("touchDataArry.length=",touchDataArry.length,"points.length=",points.length,"x,y=",touchDataArry[touchDataArry.length - 1][ix4][7],touchDataArry[touchDataArry.length - 1][ix4][8]);
-                }
             }
             console.log(e);             //20250423
         };
