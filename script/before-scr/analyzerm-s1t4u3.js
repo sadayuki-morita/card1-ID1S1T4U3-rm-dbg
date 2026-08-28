@@ -43,6 +43,9 @@
  * 		directoryPassが定義されていない場合は、デフォルトで"./script"を読み込むようにしている。
  * Rev.3.2.7	20260729
  * 		タッチ座標解析データ配列touchDataArryの3次元配列化
+ * Rev.4.0.0	20260828
+ * 		動作判定に45度方向判定追加。
+ * 		動作判定のOrigin IdとMotion Id の一致判定を追加。
 /**
  * 外部ファイルの読み込み
 */
@@ -106,8 +109,15 @@ var MTCardConfig = function(argument) {
 
 //motion制御
 	this.transitTouchWaitTime = 25;						   	//motion制御カード移動中の識別成功時に次のタッチを受け付けるまでのインターバル(msec)
-	//this.motionDetectNum = [2,-1,2,2,1,1,0,0];             	///motion制御指定配列（配列の要素番号 0:motion制御有、1:設定なし(-1固定)、2:下、3:上、4:左、5:右、6:右回転、7:左回転 の値を 閾値制御の場合 1 疑似アナログ制御の場合 2 にする。例えば、上下を閾値制御、左右回転をアナログ制御したい場合は、[2,-1,1,1,0,0,2,2]と指定する）
-	this.motionDetectNum = [0,0,0,0,0,0,0,0];              	///motion制御指定配列（配列の要素番号 0:motion制御有、1:設定なし(-1固定)、2:下、3:上、4:左、5:右、6:右回転、7:左回転 の値を 閾値制御の場合 1 疑似アナログ制御の場合 2 にする。例えば、上下を閾値制御、左右回転をアナログ制御したい場合は、[2,-1,1,1,0,0,2,2]と指定する）
+	this.motionDetectNum = [0,0,0,0,0,0,0,0,0,0];              	
+	/*motion制御指定配列（
+			配列の要素番号 	0:motion制御フラグ、= 0 motion制御無し、= 1 有り(6判定仕様)、= 2 疑似アナログ判定有り(6判定仕様)、= 3 有り(8判定仕様、疑似アナログ判定無し)
+							1:設定なし(-1固定)、
+						(6判定仕様)の場合
+							2:下、3:上、4:左、5:右、6:右回転、7:左回転 8,9:指定無し(未使用)の値を 閾値制御の場合 1 疑似アナログ制御の場合 2 にする。例えば、上下を閾値制御、左右回転をアナログ制御したい場合は、[2,-1,1,1,0,0,2,2,0,0]と指定する）
+						(8判定仕様)の場合、回転角で規定する。
+							2: X軸＋方向とのなす角度が、−22.5°～67.5°の範囲、3: 67．5°～112.5°の範囲、4: 112．5°～157.5°の範囲、5: 157.5°～202.5°の範囲、6:202.5°～247.5°の範囲、7:247.5°～292.5°の範囲、8:292.5°～337.5°の範囲、9:337.5°～22.5°の範囲で、値を 1 とする。疑似アナログ制御は禁止。
+	*/
 	this.motionThresholdGridX = 1;                       	//motion制御X方向grid幅閾値
 	this.motionThresholdGridY = 1;                         	//motion制御Y方向grid幅閾値
 	this.motionThresholdAngle = 15;                        	//motion制御回転角度閾値(unit: degree)
@@ -397,7 +407,7 @@ var Analyze = function (callback, willStart, onError) {
 							self.authOriginPoints.push(analyzed);
 							self.idFirstAuth = true;
 							self.idMotionAuth = false; 
-							//console.log("self.authOriginPoints= ",JSON.parse(JSON.stringify(self.authOriginPoints)),"timestamp=",self.authOriginPoints[0].timestamp);		//20240826
+							console.log("self.authOriginPoints= ",JSON.parse(JSON.stringify(self.authOriginPoints)),"timestamp=",self.authOriginPoints[0].timestamp);		//20240826
 
 							analyzed.point = 0;
 
@@ -410,19 +420,19 @@ var Analyze = function (callback, willStart, onError) {
 							rotationDetectBlock:{
 								//rotation判定　rotationDetect > 0
 								if(self.touchAngleDeg  < 0 + _cardConf.rotationThresholdAngle && self.touchAngleDeg  > 0 - _cardConf.rotationThresholdAngle ){
-									//"10":カード正面が、手前向き　0°±15°
+									//"10":カード正面が、手前向き　0°±30°
 										self.rotatePoint = 10;
 										break rotationDetectBlock; 
 									} else if(self.touchAngleDeg  < 90 + _cardConf.rotationThresholdAngle && self.touchAngleDeg  > 90 - _cardConf.rotationThresholdAngle ){
-									//"20":カード正面が、右向き　90°±15°
+									//"20":カード正面が、右向き　90°±30°
 										self.rotatePoint = 20;
 										break rotationDetectBlock; 
 									} else if(self.touchAngleDeg  < -180 + _cardConf.rotationThresholdAngle && self.touchAngleDeg  > -180 - _cardConf.rotationThresholdAngle ){
-									//"30":カード正面が、先方向き　-180°±15°
+									//"30":カード正面が、先方向き　-180°±30°
 										self.rotatePoint = 30;
 										break rotationDetectBlock; 
 									} else if(self.touchAngleDeg  < -90 + _cardConf.rotationThresholdAngle && self.touchAngleDeg  > -90 - _cardConf.rotationThresholdAngle ){
-									//"40":カード正面が、左向き　-90°±15°
+									//"40":カード正面が、左向き　-90°±30°
 										self.rotatePoint = 40;
 										break rotationDetectBlock; 
 									//タッチ方向判定NGの場合、判定Stop		20251104追加
@@ -443,97 +453,159 @@ var Analyze = function (callback, willStart, onError) {
 							self.authMotionPoints=[];
 							self.authMotionPoints.push(analyzed);
 			
-							//console.log("self.authMotionPoints= ",JSON.parse(JSON.stringify(self.authMotionPoints)),"timestamp=",self.authMotionPoints[0].timestamp);		//20240826
-							
-							//変化量計算＝電極の重心座標の移動距離(＝動作後－初期)を両方のgrid幅の平均で規格化、角度は、IDアナライズ時の回転角度差(＝動作後－初期)
-							let deltaX = (self.authMotionPoints[0].centroidX - self.authOriginPoints[0].centroidX) / ((self.authMotionPoints[0].gridWidth + self.authOriginPoints[0].gridWidth) / 2),
-								deltaY = (self.authMotionPoints[0].centroidY - self.authOriginPoints[0].centroidY) / ((self.authMotionPoints[0].gridHeight + self.authOriginPoints[0].gridHeight) / 2),
-								deltaAngle = (self.authMotionPoints[0].angleRad - self.authOriginPoints[0].angleRad) * (180 / Math.PI);
-					
-							if(deltaAngle > 90 ) {													//ID認識座標変換の回転角を第1象限角度に規格化　20240826 
-								deltaAngle = deltaAngle - 180 ;
-							}else if(deltaAngle < -90) {
-								deltaAngle = deltaAngle + 180 ;
-							}
-							
-							console.log("DP,Mtn,",analyzed.id,",deltaAngle=",deltaAngle.toFixed(2),",CentX= ",self.authMotionPoints[0].centroidX.toFixed(2),",CentY= ",self.authMotionPoints[0].centroidY.toFixed(2),",Ang= ",(self.authMotionPoints[0].angleRad * (180 / Math.PI)).toFixed(2),",Time= ",self.authMotionPoints[0].timestamp.toFixed(2));		//20250905
+							console.log("self.authMotionPoints= ",JSON.parse(JSON.stringify(self.authMotionPoints)),"timestamp=",self.authMotionPoints[0].timestamp);		//20240826
+						
+							//OrgIdとMotionIdのIDが一致しているか判定			20260827 add
+							if(self.authOriginPoints[0].id === self.authMotionPoints[0].id) {
+								//self.idMotionAuth = true;
 
-							//console.log("deltaAngle_1",deltaAngle.toFixed(2));
-
-							//console.log("deltaAngle_0*angleRadSign",deltaAngle*angleRadSign);
-
-							//前回のアナログ値解析結果を格納
-							self.lastMotionAnalogOut=self.motionAnalogOut;
-
-							//変化量の閾値比率＝アナログ値を格納
-							self.motionAnalogOut=[deltaX/_cardConf.motionThresholdGridX, deltaY/_cardConf.motionThresholdGridY, deltaAngle/_cardConf.motionThresholdAngle, (self.authMotionPoints[0].timestamp - self.authOriginPoints[0].timestamp)];
-
-							//アナログ値の変化量＝前回-今回を格納
-							self.deltaMoitonAnalogOut=[self.lastMotionAnalogOut[0]-self.motionAnalogOut[0],self.lastMotionAnalogOut[1]-self.motionAnalogOut[1],self.lastMotionAnalogOut[2]-self.motionAnalogOut[2],-1*(self.lastMotionAnalogOut[3]-self.motionAnalogOut[3])];
-							
-							//閾値判定ブロック			analyzed.pointとmotionDetectNum[]の要素番号を一致させる。コールバックのposition値とのズレ解消　20251110
-							motionDitectBlock:{
-								//閾値判定　motionDetectNum[n] > 0
-								if(_cardConf.motionDetectNum[2] > 0 && self.motionAnalogOut[1] > 1 && Math.abs(self.motionAnalogOut[0]) < 1){		// && Math.abs(deltaAngle) < 20){
-								//"2":画面下側へ3grid～20.1mm、横方向±1grid～13.4mm幅未満、		//回転±20°～atan2(2.5,3)～横18.1mm幅未満
-									analyzed.point = 2;
-									self.motionInit();
-									break motionDitectBlock; 
-								} else if (_cardConf.motionDetectNum[3] > 0 && self.motionAnalogOut[1] < -1 && Math.abs(self.motionAnalogOut[0]) < 1){		// && Math.abs(deltaAngle) < 20){
-								//"3":画面上側へ3grid～20.1mm、横方向±1grid～13.4mm幅未満、		//回転±20°～atan2(2.5,3)～横18.1mm幅未満
-									analyzed.point = 3;
-									self.motionInit();
-									break motionDitectBlock;
-								} else if (_cardConf.motionDetectNum[4] > 0 && self.motionAnalogOut[0] > 1 && Math.abs(self.motionAnalogOut[1]) < 1){		// && Math.abs(deltaAngle) < 20){
-								//"4":画面右側へ2grid～13.4mm、縦方向±1grid～13.4mm幅未満、		//回転±20°～atan2(2.5,3)～横18.1mm幅未満
-									analyzed.point = 4;
-									self.motionInit();
-									break motionDitectBlock; 
-								} else if (_cardConf.motionDetectNum[5] > 0 && self.motionAnalogOut[0] < -1 && Math.abs(self.motionAnalogOut[1]) < 1){		// && Math.abs(deltaAngle) < 20){
-								//"5":画面左側へ2grid～13.4mm、縦方向±1grid～13.4mm幅未満、		//回転±20°～atan2(2.5,3)～横18.1mm幅未満
-									analyzed.point = 5;
-									self.motionInit();
-									break motionDitectBlock; 
-								} else if (_cardConf.motionDetectNum[6] > 0 && self.motionAnalogOut[2] > 1 && Math.abs(self.motionAnalogOut[1]) < 1 && Math.abs(self.motionAnalogOut[0]) < 1){
-								//"6":反時計回り(左回り)に+20°～atan2(0.83,1)～5.6mm,6.7mm、縦方向±1grid～13.4mm幅未満、横方向±1grid～13.4mm幅未満、
-									analyzed.point = 6;
-									self.motionInit();
-									break motionDitectBlock; 
-								} else if (_cardConf.motionDetectNum[7] > 0 && self.motionAnalogOut[2] < -1 && Math.abs(self.motionAnalogOut[1]) < 1 && Math.abs(self.motionAnalogOut[0]) < 1){
-								//"7":時計回り(右回り)に‐20°～atan2(0.83,1)～5.6mm,6.7mm、縦方向±1grid～13.4mm幅未満、横方向±1grid～13.4mm幅未満、
-									analyzed.point = 7;
-									self.motionInit();
-									break motionDitectBlock; 
+								//変化量計算＝電極の重心座標の移動距離(＝動作後－初期)を両方のgrid幅の平均で規格化、角度は、IDアナライズ時の回転角度差(＝動作後－初期)
+								let deltaX = (self.authMotionPoints[0].centroidX - self.authOriginPoints[0].centroidX) / ((self.authMotionPoints[0].gridWidth + self.authOriginPoints[0].gridWidth) / 2),
+									deltaY = (self.authMotionPoints[0].centroidY - self.authOriginPoints[0].centroidY) / ((self.authMotionPoints[0].gridHeight + self.authOriginPoints[0].gridHeight) / 2),
+									deltaAngle = (self.authMotionPoints[0].angleRad - self.authOriginPoints[0].angleRad) * (180 / Math.PI);
+						
+								if(deltaAngle > 90 ) {													//ID認識座標変換の回転角を第1象限角度に規格化　20240826 
+									deltaAngle = deltaAngle - 180 ;
+								}else if(deltaAngle < -90) {
+									deltaAngle = deltaAngle + 180 ;
 								}
+								
+								console.log("DP,Mtn,",analyzed.id,",deltaAngle=",deltaAngle.toFixed(2),",CentX= ",self.authMotionPoints[0].centroidX.toFixed(2),",CentY= ",self.authMotionPoints[0].centroidY.toFixed(2),",Ang= ",(self.authMotionPoints[0].angleRad * (180 / Math.PI)).toFixed(2),",Time= ",self.authMotionPoints[0].timestamp.toFixed(2));		//20250905
 
-								//アナログ判定　motionDetectNum[n] > 1
-								if(_cardConf.motionDetectNum[0] > 1){
-									if(_cardConf.motionDetectNum[2] > 1 && self.deltaMoitonAnalogOut[1] < 0.1 && self.motionAnalogOut[1] > 0.05 && Math.abs(self.motionAnalogOut[0]) < 1 && Math.abs(self.motionAnalogOut[2]) < 1){
-									//"2":画面下側移動距離 >5%～1mm、⊿移動距離比 10%～4mm未満、横方向±1grid～13.4mm幅未満、回転±20°～atan2(2.5,3)～横18.1mm幅未満
-										analyzed.point = 2;
-										break motionDitectBlock;
-									} else if (_cardConf.motionDetectNum[3] > 1 && self.deltaMoitonAnalogOut[1] > -0.1 && self.motionAnalogOut[1]  < -0.05 && Math.abs(self.motionAnalogOut[0]) < 1 && Math.abs(self.motionAnalogOut[2]) < 1){
-									//"3":画面上側移動距離 <-5%～1mm、⊿移動距離比 10%～4mm未満、横方向±1grid～13.4mm幅未満、回転±20°～atan2(1.1,3)～横7.4mm幅未満
-										analyzed.point = 3;
-										break motionDitectBlock;
-									} else if (_cardConf.motionDetectNum[4] > 1 && self.deltaMoitonAnalogOut[0] < 0.1 && self.motionAnalogOut[0] > 0.05 && Math.abs(self.motionAnalogOut[1]) < 1 && Math.abs(self.motionAnalogOut[2]) < 1){
-									//"4":画面右側移動距離 >5%～0.7mm、⊿移動距離比 10%～2.7mm未満、縦方向±1grid～13.4mm幅未満、回転±20°～atan2(1.1,3)～横7.4mm幅未満
-										analyzed.point = 4;
-										break motionDitectBlock;
-									} else if (_cardConf.motionDetectNum[5] > 1 && self.deltaMoitonAnalogOut[0] > -0.1 &&  self.motionAnalogOut[0] < -0.05 && Math.abs(self.motionAnalogOut[1]) < 1 && Math.abs(self.motionAnalogOut[2]) < 1){
-									//"5":画面左側移動距離 <-5%～0.7mm、⊿移動距離比 10%～2.7mm未満、縦方向±1grid～13.4mm幅未満、回転±20°～atan2(1.1,3)～横7.4mm幅未満
-										analyzed.point = 5;
-										break motionDitectBlock;
-									} else if (_cardConf.motionDetectNum[6] > 1 && self.deltaMoitonAnalogOut[2] < 0.1 && self.motionAnalogOut[2] > 0.05 && Math.abs(self.motionAnalogOut[0]) < 1 && Math.abs(self.motionAnalogOut[1]) < 1){
-									//"6":反時計回り(左回り)角度比 >5%～1°～atan2(0.05,3)～横0.34mm、⊿角度比 10%～2°～atan2(0.11,3)～横7mm、縦方向±1grid～13.4mm幅未満、横方向±1grid～13.4mm幅未満
-										analyzed.point = 6;
-										break motionDitectBlock;
-									} else if (_cardConf.motionDetectNum[7] > 1 && self.deltaMoitonAnalogOut[2] > -0.1 && self.motionAnalogOut[2] < -0.05 && Math.abs(self.motionAnalogOut[0]) < 1 && Math.abs(self.motionAnalogOut[1]) < 1){
-									//"7":時計回り(右回り)角度比 <-5%～1°～atan2(0.05,3)～横0.34mm、⊿角度比 -10%～2°～atan2(0.11,3)～横7mm、縦方向±1grid～13.4mm幅未満、横方向±1grid～13.4mm幅未満
-										analyzed.point = 7;
-										break motionDitectBlock;
+								//console.log("deltaAngle_1",deltaAngle.toFixed(2));
+
+								//console.log("deltaAngle_0 * angleRadSign",deltaAngle * angleRadSign);
+
+								//前回のアナログ値解析結果を格納
+								self.lastMotionAnalogOut=self.motionAnalogOut;
+
+								//変化量の閾値比率＝アナログ値を格納
+								self.motionAnalogOut=[deltaX/_cardConf.motionThresholdGridX, deltaY/_cardConf.motionThresholdGridY, deltaAngle/_cardConf.motionThresholdAngle, (self.authMotionPoints[0].timestamp - self.authOriginPoints[0].timestamp)];
+
+								//アナログ値の変化量＝前回-今回を格納
+								self.deltaMoitonAnalogOut=[self.lastMotionAnalogOut[0]-self.motionAnalogOut[0],self.lastMotionAnalogOut[1]-self.motionAnalogOut[1],self.lastMotionAnalogOut[2]-self.motionAnalogOut[2],-1*(self.lastMotionAnalogOut[3]-self.motionAnalogOut[3])];
+								
+								//閾値判定ブロック			analyzed.pointとmotionDetectNum[]の要素番号を一致させる。コールバックのposition値とのズレ解消　20251110
+								motionDitectBlock:{
+									//閾値6判定仕様　motionDetectNum[0] = 1
+									if(_cardConf.motionDetectNum[0] > 0 && _cardConf.motionDetectNum[0] < 3){									
+										if(_cardConf.motionDetectNum[2] > 0 && self.motionAnalogOut[1] > 1 && Math.abs(self.motionAnalogOut[0]) < 1){		// && Math.abs(deltaAngle) < 20){
+										//"2":画面下側へ3grid～20.1mm、横方向±1grid～13.4mm幅未満、		//回転±20°～atan2(2.5,3)～横18.1mm幅未満
+											analyzed.point = 2;
+											self.motionInit();
+											break motionDitectBlock; 
+										} else if (_cardConf.motionDetectNum[3] > 0 && self.motionAnalogOut[1] < -1 && Math.abs(self.motionAnalogOut[0]) < 1){		// && Math.abs(deltaAngle) < 20){
+										//"3":画面上側へ3grid～20.1mm、横方向±1grid～13.4mm幅未満、		//回転±20°～atan2(2.5,3)～横18.1mm幅未満
+											analyzed.point = 3;
+											self.motionInit();
+											break motionDitectBlock;
+										} else if (_cardConf.motionDetectNum[4] > 0 && self.motionAnalogOut[0] > 1 && Math.abs(self.motionAnalogOut[1]) < 1){		// && Math.abs(deltaAngle) < 20){
+										//"4":画面右側へ2grid～13.4mm、縦方向±1grid～13.4mm幅未満、		//回転±20°～atan2(2.5,3)～横18.1mm幅未満
+											analyzed.point = 4;
+											self.motionInit();
+											break motionDitectBlock; 
+										} else if (_cardConf.motionDetectNum[5] > 0 && self.motionAnalogOut[0] < -1 && Math.abs(self.motionAnalogOut[1]) < 1){		// && Math.abs(deltaAngle) < 20){
+										//"5":画面左側へ2grid～13.4mm、縦方向±1grid～13.4mm幅未満、		//回転±20°～atan2(2.5,3)～横18.1mm幅未満
+											analyzed.point = 5;
+											self.motionInit();
+											break motionDitectBlock; 
+										} else if (_cardConf.motionDetectNum[6] > 0 && self.motionAnalogOut[2] > 1 && Math.abs(self.motionAnalogOut[1]) < 1 && Math.abs(self.motionAnalogOut[0]) < 1){
+										//"6":反時計回り(左回り)に+20°～atan2(0.83,1)～5.6mm,6.7mm、縦方向±1grid～13.4mm幅未満、横方向±1grid～13.4mm幅未満、
+											analyzed.point = 6;
+											self.motionInit();
+											break motionDitectBlock; 
+										} else if (_cardConf.motionDetectNum[7] > 0 && self.motionAnalogOut[2] < -1 && Math.abs(self.motionAnalogOut[1]) < 1 && Math.abs(self.motionAnalogOut[0]) < 1){
+										//"7":時計回り(右回り)に‐20°～atan2(0.83,1)～5.6mm,6.7mm、縦方向±1grid～13.4mm幅未満、横方向±1grid～13.4mm幅未満、
+											analyzed.point = 7;
+											self.motionInit();
+											break motionDitectBlock; 
+										}
+										//アナログ6判定仕様　motionDetectNum[n] = 2
+										if(_cardConf.motionDetectNum[0] > 1){
+											if(_cardConf.motionDetectNum[2] === 2 && self.deltaMoitonAnalogOut[1] < 0.1 && self.motionAnalogOut[1] > 0.05 && Math.abs(self.motionAnalogOut[0]) < 1 && Math.abs(self.motionAnalogOut[2]) < 1){
+											//"2":画面下側移動距離 >5%～1mm、⊿移動距離比 10%～4mm未満、横方向±1grid～13.4mm幅未満、回転±20°～atan2(2.5,3)～横18.1mm幅未満
+												analyzed.point = 2;
+												break motionDitectBlock;
+											} else if (_cardConf.motionDetectNum[3] === 2 && self.deltaMoitonAnalogOut[1] > -0.1 && self.motionAnalogOut[1]  < -0.05 && Math.abs(self.motionAnalogOut[0]) < 1 && Math.abs(self.motionAnalogOut[2]) < 1){
+											//"3":画面上側移動距離 <-5%～1mm、⊿移動距離比 10%～4mm未満、横方向±1grid～13.4mm幅未満、回転±20°～atan2(1.1,3)～横7.4mm幅未満
+												analyzed.point = 3;
+												break motionDitectBlock;
+											} else if (_cardConf.motionDetectNum[4] === 2 && self.deltaMoitonAnalogOut[0] < 0.1 && self.motionAnalogOut[0] > 0.05 && Math.abs(self.motionAnalogOut[1]) < 1 && Math.abs(self.motionAnalogOut[2]) < 1){
+											//"4":画面右側移動距離 >5%～0.7mm、⊿移動距離比 10%～2.7mm未満、縦方向±1grid～13.4mm幅未満、回転±20°～atan2(1.1,3)～横7.4mm幅未満
+												analyzed.point = 4;
+												break motionDitectBlock;
+											} else if (_cardConf.motionDetectNum[5] === 2 && self.deltaMoitonAnalogOut[0] > -0.1 &&  self.motionAnalogOut[0] < -0.05 && Math.abs(self.motionAnalogOut[1]) < 1 && Math.abs(self.motionAnalogOut[2]) < 1){
+											//"5":画面左側移動距離 <-5%～0.7mm、⊿移動距離比 10%～2.7mm未満、縦方向±1grid～13.4mm幅未満、回転±20°～atan2(1.1,3)～横7.4mm幅未満
+												analyzed.point = 5;
+												break motionDitectBlock;
+											} else if (_cardConf.motionDetectNum[6] === 2 && self.deltaMoitonAnalogOut[2] < 0.1 && self.motionAnalogOut[2] > 0.05 && Math.abs(self.motionAnalogOut[0]) < 1 && Math.abs(self.motionAnalogOut[1]) < 1){
+											//"6":反時計回り(左回り)角度比 >5%～1°～atan2(0.05,3)～横0.34mm、⊿角度比 10%～2°～atan2(0.11,3)～横7mm、縦方向±1grid～13.4mm幅未満、横方向±1grid～13.4mm幅未満
+												analyzed.point = 6;
+												break motionDitectBlock;
+											} else if (_cardConf.motionDetectNum[7] === 2 && self.deltaMoitonAnalogOut[2] > -0.1 && self.motionAnalogOut[2] < -0.05 && Math.abs(self.motionAnalogOut[0]) < 1 && Math.abs(self.motionAnalogOut[1]) < 1){
+											//"7":時計回り(右回り)角度比 <-5%～1°～atan2(0.05,3)～横0.34mm、⊿角度比 -10%～2°～atan2(0.11,3)～横7mm、縦方向±1grid～13.4mm幅未満、横方向±1grid～13.4mm幅未満
+												analyzed.point = 7;
+												break motionDitectBlock;
+											}
+										}
 									}
-								}
+									//閾値8判定仕様　motionDetectNum[0] = 3
+									if(_cardConf.motionDetectNum[0] === 3){	
+
+										console.log("motionAnalogOut_distance",Math.hypot(self.motionAnalogOut[0], self.motionAnalogOut[1]) );
+
+										if(Math.hypot(self.motionAnalogOut[0], self.motionAnalogOut[1]) > 1) {
+											const motDevSlope1 = 0.41421356237309503, motDevSlope2 = 2.414213562373095;		//motDevSlope1=tan22.5°、motDevSlope2=tan67.5°　20260804							
+											if(_cardConf.motionDetectNum[2] > 0 && self.motionAnalogOut[0] > 0 && Math.abs(self.motionAnalogOut[1]) < motDevSlope1 * self.motionAnalogOut[0]){
+											//"2":X軸＋方向とのなす角度が、−22.5°～67.5°の範囲
+												analyzed.point = 2;
+												self.motionInit();
+												break motionDitectBlock; 
+											} else if( _cardConf.motionDetectNum[3] > 0 && self.motionAnalogOut[0] > 0 && -1 * self.motionAnalogOut[1] > motDevSlope1 * self.motionAnalogOut[0] && -1 * self.motionAnalogOut[1] < motDevSlope2 * self.motionAnalogOut[0]){
+											//3: X軸＋方向とのなす角度が、67．5°～112.5°の範囲
+												analyzed.point = 3;
+												self.motionInit();
+												break motionDitectBlock; 
+											} else if( _cardConf.motionDetectNum[4] > 0 && -1 * self.motionAnalogOut[1] > 0 && -1 * self.motionAnalogOut[1] > motDevSlope2 * self.motionAnalogOut[0] && -1 * self.motionAnalogOut[1] >  -1 * motDevSlope2 * self.motionAnalogOut[0]){
+											//4: X軸＋方向とのなす角度が、112．5°～157.5°の範囲
+												analyzed.point = 4;
+												self.motionInit();
+												break motionDitectBlock; 
+											} else if( _cardConf.motionDetectNum[5] > 0 && self.motionAnalogOut[0] < 0 && -1 * self.motionAnalogOut[1] < -1 * motDevSlope2 * self.motionAnalogOut[0] && -1 * self.motionAnalogOut[1] > -1 * motDevSlope1 * self.motionAnalogOut[0]){
+											//5: X軸＋方向とのなす角度が、157.5°～202.5°の範囲
+												analyzed.point = 5;
+												self.motionInit();
+												break motionDitectBlock; 
+											} else if( _cardConf.motionDetectNum[6] > 0 && self.motionAnalogOut[0] < 0 && -1 * self.motionAnalogOut[1] < -1 * motDevSlope1 * self.motionAnalogOut[0] && -1 * self.motionAnalogOut[1] > motDevSlope1 * self.motionAnalogOut[0]){
+											//6: X軸＋方向とのなす角度が、202.5°～247.5°の範囲
+												analyzed.point = 6;
+												self.motionInit();
+												break motionDitectBlock; 
+											} else if( _cardConf.motionDetectNum[7] > 0 && self.motionAnalogOut[0] < 0 && -1 * self.motionAnalogOut[1] < motDevSlope1 * self.motionAnalogOut[0] && -1 * self.motionAnalogOut[1] > motDevSlope2 * self.motionAnalogOut[0]){
+											//7: X軸＋方向とのなす角度が、247.5°～292.5°の範囲
+												analyzed.point = 7;
+												self.motionInit();
+												break motionDitectBlock; 
+											} else if( _cardConf.motionDetectNum[8] > 0 && -1 * self.motionAnalogOut[1] < 0 && -1 * self.motionAnalogOut[1] < motDevSlope2 * self.motionAnalogOut[0] && -1 * self.motionAnalogOut[1] < -1 * motDevSlope2 * self.motionAnalogOut[0]){
+											//8: X軸＋方向とのなす角度が、292.5°～337.5°の範囲
+												analyzed.point = 8;
+												self.motionInit();
+												break motionDitectBlock; 
+											} else if( _cardConf.motionDetectNum[9] > 0 && self.motionAnalogOut[0] > 0 && -1 * self.motionAnalogOut[1] > -1 * motDevSlope2 * self.motionAnalogOut[0] && -1 * self.motionAnalogOut[1] < -1 * motDevSlope1 * self.motionAnalogOut[0]){
+											//9: X軸＋方向とのなす角度が、337.5°～22.5°の範囲
+												analyzed.point = 9;
+												self.motionInit();
+												break motionDitectBlock; 
+											}
+										}
+									}
+								
+								} 
+
+							} else {
+								//self.idMotionAuth = false;
+								console.log("ID認証不一致 OrgId=",self.authOriginPoints[0].id,",MotionId=",self.authMotionPoints[0].id);		//20260827 add
+								break bothDetectBlock; 
 							}
 						}
 					}

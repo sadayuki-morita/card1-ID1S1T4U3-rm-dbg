@@ -51,10 +51,16 @@
               180度(±cardConf.rotationThresholdAngle=30)にした場合、position = 30  
               -90度(±cardConf.rotationThresholdAngle=30)にした場合、position = 40    
 
-    4. cardConf.motionDetectNum[0,0,0,0,0,0,0,0] : カードの閾値動作判定および疑似アナログ動作判定有無変数配列
+    4. cardConf.motionDetectNum[0,0,0,0,0,0,0,0,0,0] : カードの閾値動作判定および疑似アナログ動作判定有無変数配列
+        - 配列要素 motionDetectNum[0] の値で、動作判定仕様を制御する。  
+            0 : 動作判定無し  
+            1 : 6条件分岐閾値動作判定  
+            2 : 6条件分岐閾値動作判定＋疑似アナログ動作判定（疑似アナログ動作判定は、閾値動作判定の閾値幅を1/20に縮め、判定OKでコールバック関数実行後も連続して判定を行う。 ）  
+            3 : 8条件分岐閾値動作判定  
         - 閾値動作判定は、最初のID認証5ポイントの重心座標が、ID認証状態で規定の閾値幅動いた場合に指定のcallbacks[position]のコールバック関数を実行する。  
-        - 閾値幅は、タッチパネル座標のX方向：cardConf.motionThresholdGridX 、Y方向：cardConf.motionThresholdGridY 、回転角度：cardConf.motionThresholdAngle で変更可能。初期値は、カード1Grid=6.7mm、および15度  
-        - 疑似アナログ動作判定は、閾値動作判定の閾値幅を1/20に縮め、判定OKでコールバック関数実行後も連続して判定を行う。  
+        - 閾値幅は、タッチパネル座標のX方向：cardConf.motionThresholdGridX 、Y方向：cardConf.motionThresholdGridY 、回転角度：cardConf.motionThresholdAngle で変更可能。初期値は、カード1Grid=6.7mm、および15度
+
+        - 6条件分岐動作判定および疑似アナログ動作判定  
             motionDetectNum[0] = 動作判定有無変数　0 : 動作判定無し / 1 : 閾値動作判定有 / 2 : 疑似アナログ動作判定有、以降の要素も同一  
             motionDetectNum[1] = 未使用 −1(動作判定有り) or 0 (動作判定なし)  
             motionDetectNum[2] = 下側(+Y座標方向)動作判定、判定OKの場合、position = 2  
@@ -62,12 +68,27 @@
             motionDetectNum[4] = 左側(-X座標方向)動作判定、判定OKの場合、position = 4  
             motionDetectNum[5] = 右側(+X座標方向)動作判定、判定OKの場合、position = 5  
             motionDetectNum[6] = 右回転(時計回り)動作判定、判定OKの場合、position = 6  
-            motionDetectNum[7] = 左回転(半時計回り)動作判定、判定OKの場合、position = 7  
-        ＊例えば、上下を閾値制御、左右回転をアナログ制御したい場合は、motionDetectNum = [2,-1,1,1,0,0,2,2] と指定する。  
+            motionDetectNum[7] = 左回転(半時計回り)動作判定、判定OKの場合、position = 7   
+            motionDetectNum[8] = 未使用  0 (動作判定なし)   
+            motionDetectNum[9] = 未使用  0 (動作判定なし)   
+        ＊例えば、上下を閾値制御、左右回転をアナログ制御したい場合は、motionDetectNum = [2,-1,1,1,0,0,2,2,0,0] と指定する。    
         　また、motionDetectNum[0]=0 の場合、以降の要素に"1"または"2"としても実行されない。motionDetectNum[0]=1 or 2 とした場合、以降の要素に少なくとも1つは"1"または"2"がなければならない。  
 
-    ＊タッチ方向判定と動作判定を同時に有効化した場合、判定OKの場合、position にはタッチ方向判定結果のposition値と動作判定結果のosition値を足した値となる。  
-    　例えば、90度の横向きで右側に動かし判定OKとなった場合、position = 25 となる。  
+        - 8条件分岐動作判定  
+            motionDetectNum[0] = 動作判定有無変数　3 : 動作判定有り
+            motionDetectNum[1] = 未使用 −1(動作判定有り) or 0 (動作判定なし)  
+            motionDetectNum[2] = 右側(+X座標方向)動作判定、判定OKの場合、position = 2  
+            motionDetectNum[3] = 斜め右上側(+X,-Y座標方向)動作判定、判定OKの場合、position = 3  
+            motionDetectNum[4] = 上側(-Y座標方向)動作判定、判定OKの場合、position = 4  
+            motionDetectNum[5] = 斜め左上側(-X,-Y座標方向)動作判定、判定OKの場合、position = 5  
+            motionDetectNum[6] = 左側(-X座標方向)動作判定、判定OKの場合、position = 6  
+            motionDetectNum[7] = 斜め左下側(-X,+Y座標方向)動作判定、判定OKの場合、position = 7  
+            motionDetectNum[8] = 下側(+Y座標方向)動作判定、判定OKの場合、position = 8  
+            motionDetectNum[9] = 斜め右下側(+X,+Y座標方向)動作判定、判定OKの場合、position = 9  
+        ＊8条件分岐動作判定では、疑似アナログ動作判定は設定出来ない。  
+
+        - タッチ方向判定と動作判定を同時に有効化した場合、判定OKの場合、position にはタッチ方向判定結果のposition値と動作判定結果のosition値を足した値となる。
+        例えば、90度の横向きで右側に動かし判定OKとなった場合、position = 25 となる。  
 
 
 - 動作モード変更パラメータ、コード記述と動作モード対応および検証したHTMLページ  
@@ -118,7 +139,7 @@
 
 ## アナライザバージョン
 
-- analyzerm-s1t4u3-ob.js  Rev.3.2.7 20260729
+- analyzerm-s1t4u3-ob.js  Rev4.0.0	20260828
 - cardrm-s1t4u3-ob.js  Rev.3.0.5 20260729
 - ctrlmr.js Rev.3.2.1 20260204
                   
@@ -139,3 +160,4 @@
 - アクスタ、プレート型2次試作IDパターンの180度回転対応  20260226
 - デモページ群のディレクトリ構造とSDK他のディレクトリ構造の共用化　20260529
 - タッチ座標解析データ配列touchDataArryの3次元配列化 20260729
+- 動作判定に45度方向判定追加。動作判定のOrigin IdとMotion Id の一致判定を追加。

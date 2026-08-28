@@ -1,0 +1,248 @@
+
+/* styles.css */
+* 
+{ 
+	font-family:"ヒラギノ丸ゴ Pro W4","ヒラギノ丸ゴ Pro","Hiragino Maru Gothic Pro","ヒラギノ角ゴ Pro W3","Hiragino Kaku Gothic Pro","HG丸ｺﾞｼｯｸM-PRO","HGMaruGothicMPRO"; 
+	margin: 0; 
+	padding: 0; 
+}
+
+body, html {
+    font-size:  15px;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    /*display: flex;   
+    justify-content: center;*/
+    align-items: center;
+    position: relative;    
+    overflow: hidden;
+
+    touch-action: none;                      /*20240527 追加 */
+    -webkit-touch-callout: none;
+
+    /*
+    align-items: flex-start; /* 上半分にキャンバスを表示
+    */
+}
+
+.container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    
+    z-index: 2;
+
+}
+
+.img_contents { 
+	/*width: 50%; 
+    height: 50%;*/
+    position: absolute;
+    left: 50%;
+    top: 25%;
+    transform: translate(-50%, -50%);
+    width: 50%; 
+    height: auto;
+
+    z-index: 2;
+}
+
+.copyright {
+    position: fixed;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    font-size: 3vw;
+    color: #666;
+
+    z-index: 2;
+}
+
+h1 {
+    font-size: 6vw;
+    margin: 0;
+    padding: 0;
+    font-weight: bold;
+    text-align: center;
+    color:midnightblue;
+    position: relative;
+    z-index: 2;
+}
+
+h2 {
+    font-size: 4vw;
+    margin: 0;
+    padding: 0;
+    font-weight: bold;
+    text-align: center;
+    background-color:ivory;      /*20240523 追加 */
+    position: relative;
+    z-index: 2;
+}
+p {
+    margin: 0;
+    padding: 0;
+    font-size: 3vw;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 2px;
+    position: relative;
+    z-index: 2;
+}
+
+canvas {
+    width: 100%; /* キャンバスの幅を画面全体に設定 */
+    height: 100%; /* キャンバスの高さを画面の半分に設定 */
+
+    box-sizing: border-box; /* パディングやボーダーを含めてサイズを計算 */
+}
+
+#upperCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    box-sizing: border-box; /* パディングやボーダーを含めてサイズを計算 */
+    z-index: 1;
+    border: none; /* ボーダーを削除 */
+
+    background-color:transparent;   /*lightgreen      /*20240523 追加 */
+}
+
+#lowerCanvas {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    box-sizing: border-box; /* パディングやボーダーを含めてサイズを計算 */
+    z-index: 1;
+    border: none; /* ボーダーを削除 */
+
+    background-color:lightcyan     /*20240523 追加 */
+}
+
+#touchCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height:100%;
+    box-sizing: border-box; /* パディングやボーダーを含めてサイズを計算 */
+    z-index: 2;
+    border: none; /* ボーダーを削除 */
+
+    background-color:transparent;   /*lightgreen      /*20240523 追加 */
+}
+
+#coordinates {
+    margin: 0;
+    padding: 0;
+    font-size: 15px;
+    font-weight: bold;
+    text-align: left;
+    margin-top: 2px;
+    
+    position: relative;
+    z-index: 2;
+
+    background-color:transparent;   /*20240527 追加 */
+}
+#coverDiv {
+    margin: 0;
+    padding: 0;
+    width:100%;
+    height:100%;
+    position:absolute;
+    left:0px;
+    top:0px;
+
+    user-select: none;
+
+    z-index: 2;
+
+    background-color:transparent;   /*20240527 追加 */
+}
+
+#notice {
+    position: fixed;
+    top: 50%;
+    /*left:50%;
+    transform: translate(-50%, 0);*/
+
+    margin: 0;
+    padding: 0;
+    font-size: 3vw;
+    font-weight: bold;
+    text-align: left;
+    margin-top: 2px;
+    margin-right: 10%;
+    margin-left: 10%;
+    
+    z-index: 2;
+
+    background-color:lightcyan     /*20240523 追加 */
+}
+
+/* モーダル用CSS */
+#init_modal { 
+	background-color: rgba(32,32,32,0.7); 
+	box-sizing: border-box; 
+	color: #244F80; 
+	display: block; 
+	height: 100%; 
+	left: 0; 
+	position: fixed; 
+	top: 0; 
+	width: 100%; 
+	z-index: 99999; 
+}
+
+#init_modal_box { 
+	background: #FFF; 
+	border-radius: 2vw; 
+	box-sizing: border-box; 
+	height: 20vh; 
+	left: 50%; 
+	margin: -10vh 0 0 -35vw; 
+	min-height: 30vw; 
+	position: absolute; 
+	top: 50%; 
+	width: 70vw; 
+}
+
+#init_modal_title { 
+	box-sizing: border-box; 
+	font-size: 5vw; 
+	font-weight: bold; 
+	height: 20%; 
+	padding: 2vw; 
+	width: 100%; 
+}
+
+#init_modal_message { 
+	box-sizing: border-box; 
+	font-size: 4vw; 
+	height: 52%; 
+	padding: 2vw 3vw; 
+	width: 100%; 
+}
+
+#init_modal_done { 
+	box-sizing: border-box; 
+	border-top: solid 1px #666; 
+	font-size: 5vw; 
+	font-weight: bold; 
+	height: 28%; 
+	padding: 0.75vh; 
+	text-align: center; 
+	width: 100%; 
+}
+
+.link { 
+	text-decoration: none; 
+}
