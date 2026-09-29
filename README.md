@@ -8,13 +8,15 @@
 
     card1-ID1S1T4U3-rm-dbg  
       - /css
-      - /img  ：画像をデモ仕様毎に格納、Git管理しない  
+      - /img  ：画像をデモ仕様毎に格納、Git管理しない
+      - /medias     :音声データ、動画データ格納、Git管理しない  
       - /res/beeps  :反応音、Git管理しない
       - /script  ：ID認証アナライザ、IDコードリストのソース、完成したアナライザソースファイルはこの直下に置く
           - /before-scr  : 難読化前のソースファイルを格納 
           - /scr  : 難読化実施ディレクトリ
           　　- obfuscator.config.json  : 難読化設定ファイル（変更不可変数を記載）
-          - /c  : IDコードリスト 
+          - /c  : IDコードリスト
+    　- /temp   : テンポラリーファイル、暫く残しておいて役に立ちそうなもののみ入れる。適宜見直すこと 
       - 判定仕様検証HTML群 index.html等
       − confv8_IDselect_gen_20260528.html  : IDコードリストファイル作成用HTML
       - .gitignore
@@ -88,7 +90,11 @@
         ＊8条件分岐動作判定では、疑似アナログ動作判定は設定出来ない。  
 
         - タッチ方向判定と動作判定を同時に有効化した場合、判定OKの場合、position にはタッチ方向判定結果のposition値と動作判定結果のosition値を足した値となる。
-        例えば、90度の横向きで右側に動かし判定OKとなった場合、position = 25 となる。  
+        例えば、90度の横向きで右側に動かし判定OKとなった場合、position = 25 となる。 
+        
+    5. _cardAnalyzer.motionAnalogOut = [0,0,0,0,0,0];  ：動作変化のデルタ値(=変化量/閾値),重心座標格納 motionAnalogOut = [deltaX,deltaÝ,deltaangle,deltaTime,centroidX,centroidY]
+	   _cardAnalyzer.touchAngleDeg = 0;                ：タッチ方向判定回転角
+        - コールバック関数内でサンプルの移動距離、タッチ角度を使い動作を制御する場合に使用することが可能
 
 
 - 動作モード変更パラメータ、コード記述と動作モード対応および検証したHTMLページ  
@@ -136,11 +142,19 @@
 
 - 上記パラメータを変更したhtmlで、(1)ID認証、(2)タッチ方向判定、(3)動作判定（疑似アナログ動作込）、(4)タッチ方向×動作判定のデバッグ可能
 
+- デバッグ実施し、完了したページ(デモ、解析等に使用可能なHTMLページ)
+    - confv8_IDselect_gen_20260528.html　：　ブラウザで開いて、ID番号を入力すると、エンコードされたID電極座標配列ファイルを生成できる。コード内の変数idに直接ID番号を列記しても良い。
+    - index-idrmcheck.html  : 6条件動作判定版のID番号＋タッチ方向✕動作判定Checkページ
+    - index-idrmcheck3.html  : 8条件動作判定版のID番号＋タッチ方向✕動作判定Checkページ
+    - slot-game.html,slot-game2.html    : スロットマシンゲーム
+    - drive-gameDT3.html    : ドライブゲーム
+    - index-creatureStamp.html  : 8条件タッチ方向✕動作判定（斜め方向有り）生き物スタンプイラスト表示ページ
+
 
 ## アナライザバージョン
 
-- analyzerm-s1t4u3-ob.js  Rev4.0.0	20260828
-- cardrm-s1t4u3-ob.js  Rev.3.0.5 20260729
+- analyzerm-s1t4u3-ob.js  Rev.4.0.1	20260918
+- cardrm-s1t4u3-ob.js  Rev.3.0.6 20260925
 - ctrlmr.js Rev.3.2.1 20260204
                   
 
@@ -161,3 +175,5 @@
 - デモページ群のディレクトリ構造とSDK他のディレクトリ構造の共用化　20260529
 - タッチ座標解析データ配列touchDataArryの3次元配列化 20260729
 - 動作判定に45度方向判定追加。動作判定のOrigin IdとMotion Id の一致判定を追加。
+- ドライブゲーム等対応のため、motionAnalogOut配列に重心座標追加、
+  touchAnalysisEnable=falseの非解析用HTMLで、cardConfとID座標変換後座標配列のコンソール出力無し  20260929

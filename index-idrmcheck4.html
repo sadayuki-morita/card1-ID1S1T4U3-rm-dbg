@@ -7,16 +7,16 @@
     <meta http-equiv="expires" content="0" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1" />
-    <title>C-Card ID R & M Check</title>
+    <title>C-Card ID Check</title>
     <script>
         // SDKベースの場合このscriptは不要で、index.htmlでidSeriseを定義しない。
         // デバッグ評価等のSDKベースではないソースの場合は、このscriptでidSeriseを定義すること。
-        let directoryPass = "./script/before-scr";		//デモ用ディレクトリ構成とSDK、その他のディレクトリ構成の共用化、デモ用ディレクトリは、HTML先頭で directoryPass を指定する必要がある。20260529
-        //let idSerise = prompt("ID系列を入力してください。","S1");   //認証IDファイル設定 "ALL"=(S1+ID1), "S1" or "ID1" or "T4" or "U3" or "U1" のどれかを必ず指定すること。   
-        let idSerise="ALL";                             //アナライザデバッグ用、認証IDファイル設定
+        //let directoryPass = "./script";		//デモ用ディレクトリ構成とSDK、その他のディレクトリ構成の共用化、デモ用ディレクトリは、HTML先頭で directoryPass を指定する必要がある。20260529
+        let idSerise = prompt("ID系列を入力してください。","S1");   //認証IDファイル設定 "ALL"=(S1+ID1), "S1" or "ID1" or "T4" or "U3" or "U1" のどれかを必ず指定すること。   
+        //let idSerise="ALL";                             //アナライザデバッグ用、認証IDファイル設定
         //----------    20260121 タッチ座標解析
-        var touchAnalysisEnable= true,      //タッチ座標解析用データ取得フラグ：取得する＝true（巨大な座標データのCVSファイルがアップロードされる）、取得しない＝false
-            touchDataArry =[];              //20260121 touchID毎の座標を格納する配列 
+        //var touchAnalysisEnable= true,      //タッチ座標解析用データ取得フラグ：取得する＝true（巨大な座標データのCVSファイルがアップロードされる）、取得しない＝false
+        //    touchDataArry =[];              //20260121 touchID毎の座標を格納する配列 
         //----------
 
     </script>
@@ -27,7 +27,7 @@
     <!-- ↑↑↑ 必須ファイルの読込 ↑↑↑ -->
     <script>
         var analyzer = null;// カード解析処理
-        //var motionAnalogOut = [0,0,0,0];                         //動作変化のデルタ値(=変化量/閾値)格納 motionAnalogOut = [deltaX,deltaÝ,deltaangle,deltaTime]
+        //var motionAnalogOut = [0,0,0,0,0,0];                         //動作変化のデルタ値(=変化量/閾値)、および重心座標格納 motionAnalogOut = [deltaX,deltaÝ,deltaangle,deltaTime,centroidX,centroidY]
         //var touchAngleDeg = 0;                                  //タッチ方向判定回転角		20250630
 		//var resultData = "Defalut";                                   //callbacks['position']の表示用詳細結果格納変数 20250709
 
@@ -52,21 +52,19 @@
 
             //'touchElement': document,// <- 要素指定でタッチイベントを観測する例
 
-            //'touchWaitTime': 1000,							    // カード識別成功時に次のタッチを受け付けるまでのインターバル(msec)
+            'touchWaitTime': 10,							    // カード識別成功時に次のタッチを受け付けるまでのインターバル(msec)
             'fixPosition' : true,                              //動作判定、タッチ方向判定時のpositionの戻り値制御、false : position=analyze.point , true : position=1 cardId = cardId + "-" + analyze.point
             'rotationDetect' : 1,                               //rotation判定指定配列（0:rotation判定無、1:rotation判定有、{判定有の場合、タッチパネルX座標軸の＋方向ベクトルと基準電極原点側から遠端側に向かうベクトルのなす角0°：callback.point=1、90°：2、180°：3、270°：4}とする。）
-            //'motionDetectNum' : [1,-1,1,1,1,1,1,1,0,0],                //motion制御指定配列（配列の要素番号 0:motion制御有、1:設定なし(-1固定)、2:下、3:上、4:左、5:右、6:右回転、7:左回転 の値を 閾値制御の場合 1 疑似アナログ制御の場合 2 にする。例えば、上下を閾値制御、左右回転をアナログ制御したい場合は、[2,1,1,0,0,2,2]と指定する）
-            //'motionDetectNum' : [2,-1,2,2,1,1,1,1,0,0],                //motion制御指定配列（配列の要素番号 0:motion制御有、1:設定なし(-1固定)、2:下、3:上、4:左、5:右、6:右回転、7:左回転 の値を 閾値制御の場合 1 疑似アナログ制御の場合 2 にする。例えば、上下を閾値制御、左右回転をアナログ制御したい場合は、[2,1,1,0,0,2,2]と指定する）
-            'motionDetectNum' : [3,-1,1,1,1,1,1,1,1,1],                //motion制御指定配列（配列の要素番号 0:motion制御有、1:設定なし(-1固定)、2:下、3:上、4:左、5:右、6:右回転、7:左回転 の値を 閾値制御の場合 1 疑似アナログ制御の場合 2 にする。例えば、上下を閾値制御、左右回転をアナログ制御したい場合は、[2,1,1,0,0,2,2]と指定する）
+            'motionDetectNum' : [2,-1,2,2,1,1,0,0],                //motion制御指定配列（配列の要素番号 0:motion制御有、1:設定なし(-1固定)、2:下、3:上、4:左、5:右、6:右回転、7:左回転 の値を 閾値制御の場合 1 疑似アナログ制御の場合 2 にする。例えば、上下を閾値制御、左右回転をアナログ制御したい場合は、[2,1,1,0,0,2,2]と指定する）
             //'cardIdNum' : ["S1-57","S1-107","S1-582","S1-599","S1-568","S1-536","S1-106","S1-649","S1-571","S1-96","S1-105","S1-586","S1-19"],                            //認証判定するID
 
             'touchedClearInterval' : 100,						//タッチイベント終了後に蓄積している座標を初期化するまでのインターバル(msec)
-	        'rotationThresholdAngle' : 30,                      	//rotation判定角度閾値(unit: degree)		20250305
+	        //'rotationThresholdAngle' : 30,                      	//rotation判定角度閾値(unit: degree)		20250305
 
-            'transitTouchWaitTime': 10,							//motion制御カード移動中の識別成功時に次のタッチを受け付けるまでのインターバル(msec)
+            //'transitTouchWaitTime': 20,							//motion制御カード移動中の識別成功時に次のタッチを受け付けるまでのインターバル(msec)
             //'motionThresholdAngle' : 20,                        //motion制御回転角度閾値(unit: degree)
-            //'motionThresholdGridX' : 0.8,                       //motion制御X方向grid幅閾値
-            //'motionThresholdGridY' : 0.8,                         //motion制御Y方向grid幅閾値
+            'motionThresholdGridX' : 0.5,                       //motion制御X方向grid幅閾値
+            //'motionThresholdGridY' : 1,                         //motion制御Y方向grid幅閾値
                     
         };
         /*/ ↑↑↑ この変数は必要に応じて有効化して下さい ↑↑↑ */
@@ -95,6 +93,8 @@
                 let resultData = 'RN=1, '+ cardId + ", r= " + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(2)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(2)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(2)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(2))+ ", T= " + parseFloat(_cardAnalyzer.motionAnalogOut[3].toFixed(2));
                 console.log(resultData);
 
+                let resultData2 = 'RN=1, '+ cardId + ", centroidX= " + _cardAnalyzer.motionAnalogOut[4] + ", centroidY= " + _cardAnalyzer.motionAnalogOut[5]; 
+                console.log(resultData2);
                 
                 let index='',idNum='',positionNum='';
                 if(_cardConf.fixPosition){
@@ -104,9 +104,9 @@
                 } else {
                     idNum=cardId;
                 }
-                console.log("idNum=",idNum,", positionNum=",positionNum,); 
+                console.log("idNum=",idNum,", positionNum=",positionNum); 
  
-                document.getElementById("i1text").innerHTML+="id=" + idNum + ", p=" + positionNum + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(2)) + ", X=" + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(2)) + ", Y="+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(2)) + "<br>";
+                document.getElementById("i1text").innerHTML+="id=" + idNum + ", pt=" + positionNum + ", r=" + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(2)) + ", cx=" + parseFloat(_cardAnalyzer.motionAnalogOut[4].toFixed(2)) + ", cy=" + parseFloat(_cardAnalyzer.motionAnalogOut[5].toFixed(2)) + "<br>";
 
                 //------------- 20260127 タッチ座標解析
                 if(typeof touchAnalysisEnable=== "undefined"){touchAnalysisEnable=false;}								//touchAnalysisEnable未定義HTML対応
@@ -124,6 +124,9 @@
                 console.log(resultData);
                 //document.getElementById("resultData").innerHTML=resultData;
 
+                let resultData2 = 'RN=1, '+ cardId + ", centroidX= " + _cardAnalyzer.motionAnalogOut[4] + ", centroidY= " + _cardAnalyzer.motionAnalogOut[5]; 
+                console.log(resultData2);
+
                 //------------- 20260127 タッチ座標解析
                 if(typeof touchAnalysisEnable=== "undefined"){touchAnalysisEnable=false;}								//touchAnalysisEnable未定義HTML対応
                 if(touchAnalysisEnable ){ console.log("touchDataArry",touchDataArry); }             //20260121 touchID毎の座標を格納する配列 
@@ -134,6 +137,8 @@
                 return true;
             },            
 
+
+        
             /* カード解析エラー発生時に呼ばれる処理 */
             'error': function(errorCode, errorMessage, errorId) { // _cardConf.onErrorCallbackKey: function(errorCode, errorMessage, errorId) {
                 /*
@@ -207,7 +212,7 @@
 	<div id="i1" class="variable_contents c1">
         <h2 id="name" style="background-color:transparent;">ID Rotation Motion Check</h2>
 		<p style="font-size: 5vw;">Multi touch card touched</p>
-		<p id="i1text" style="font-size: 5vw;"></p>
+		<p id="i1text" style="font-size: 5px;"></p>
 	</div>
 
 	<!-- ↑↑↑ 別ページに遷移しない場合の実装例(別ページに画面遷移する場合は不要) ↑↑↑ -->

@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="cache-control" content="no-cache" />
+    <meta http-equiv="expires" content="0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>簡単スロットゲーム</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #222;
+            color: white;
+            font-family: sans-serif;
+
+            /* スマホでスクロールさせない */
+            overflow: hidden;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            height: 100vh;
+            height: 100dvh;
+        }
+
+        #game {
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            padding: 20px;
+        }
+
+        h1 {
+            margin: 0 0 20px;
+            font-size: 30px;
+        }
+
+        /* スロット本体 */
+        #slot {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+
+            background: #444;
+            border: 5px solid #888;
+            border-radius: 15px;
+
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        /* リール */
+        .reel {
+            width: 30%;
+            max-width: 120px;
+            aspect-ratio: 1 / 1;
+
+            background: white;
+            color: #111;
+
+            border: 4px solid #111;
+            border-radius: 10px;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            font-size: clamp(50px, 18vw, 90px);
+            font-weight: bold;
+
+            user-select: none;
+        }
+
+        /* STARTボタン */
+        #startButton {
+            width: 80%;
+            max-width: 350px;
+
+            padding: 18px;
+
+            font-size: 28px;
+            font-weight: bold;
+
+            border: none;
+            border-radius: 15px;
+
+            background: #e53935;
+            color: white;
+
+            box-shadow: 0 5px 0 #8e1b18;
+
+            touch-action: manipulation;
+        }
+
+        #startButton:active {
+            transform: translateY(5px);
+            box-shadow: none;
+        }
+
+        #message {
+            height: 50px;
+            margin-top: 20px;
+
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        #coin {
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        /* =========================
+        当たり演出
+        ========================= */
+
+        #winEffect {
+            position: fixed;
+
+            left: 0;
+            top: 0;
+
+            width: 100%;
+            height: 100%;
+
+            background: rgba(0, 0, 0, 0.75);
+
+            display: none;
+
+            justify-content: center;
+            align-items: center;
+
+            flex-direction: column;
+
+            z-index: 1000;
+        }
+
+
+        /* JACKPOT文字 */
+
+        #winText {
+
+            font-size: clamp(40px, 13vw, 80px);
+
+            font-weight: bold;
+
+            color: #fff;
+
+            text-align: center;
+
+            /* 文字を光らせる */
+            text-shadow:
+                0 0 5px #fff,
+                0 0 10px #fff,
+                0 0 20px #ff0,
+                0 0 40px #ff0;
+
+            animation:
+                jackpotText 0.5s infinite alternate;
+
+        }
+
+
+        /* サブメッセージ */
+
+        #winSubText {
+
+            margin-top: 20px;
+
+            font-size: 30px;
+
+            font-weight: bold;
+
+            color: white;
+
+            animation:
+                winSubText 0.8s ease-in-out infinite alternate;
+
+        }
+
+
+        /* JACKPOTの拡大・縮小 */
+
+        @keyframes jackpotText {
+
+            from {
+                transform: scale(1);
+            }
+
+            to {
+                transform: scale(1.15);
+            }
+
+        }
+
+
+        /* サブ文字 */
+
+        @keyframes winSubText {
+
+            from {
+                opacity: 0.5;
+            }
+
+            to {
+                opacity: 1;
+            }
+
+        }
+
+        /* =========================
+        タッチ領域
+        ========================= */
+
+        #touchArea {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+        }
+
+    </style>
+
+    <script>
+        let idSerise="ALL";                             //アナライザデバッグ用、認証IDファイル設定
+        let directoryPass = "./script/before-scr";		//デモ用ディレクトリ構成とSDK、その他のディレクトリ構成の共用化、デモ用ディレクトリは、HTML先頭で directoryPass を指定する必要がある。20260529
+        //let idSerise = prompt("ID系列を入力してください。","S1");   //認証IDファイル設定 "ALL"=(S1+ID1), "S1" or "ID1" or "T4" or "U3" or "U1" のどれかを必ず指定すること。   
+        //let idSerise="ALL";                             //アナライザデバッグ用、認証IDファイル設定
+
+        //----------    20260121 タッチ座標解析
+        //var touchAnalysisEnable= true,      //タッチ座標解析用データ取得フラグ：取得する＝true（巨大な座標データのCVSファイルがアップロードされる）、取得しない＝false
+        //    touchDataArry =[];              //20260121 touchID毎の座標を格納する配列 
+        //----------
+
+    </script>
+    <!-- ↓↓↓ 必須ファイルの読込 ↓↓↓ -->
+	<script type="text/javascript" src="./script/before-scr/ctrlrm.js" defer></script>
+    <script type="text/javascript" src="./script/before-scr/analyzerm-s1t4u3.js" defer></script>
+    <!-- <link rel="stylesheet" href="./css/style-creatureStamp.css" /> -->
+    <!-- ↑↑↑ 必須ファイルの読込 ↑↑↑ -->
+
+</head>
+
+<body>
+
+    <div id="game">
+
+        <h1>🎰 SLOT GAME</h1>
+
+        <div id="coin">
+            コイン：<span id="coinValue">100</span>
+        </div>
+
+        <div id="slot">
+
+            <div class="reel" id="reel1">7</div>
+            <div class="reel" id="reel2">7</div>
+            <div class="reel" id="reel3">7</div>
+
+        </div>
+
+        <button id="startButton">
+            START
+        </button>
+
+        <div id="message"></div>
+
+        <div id="winEffect">
+
+            <div id="winText">
+                🎉 JACKPOT!! 🎉
+            </div>
+
+            <div id="winSubText">
+                おめでとうございます！
+            </div>
+
+        </div>
+
+        <div>
+            <p style="font-size: 24px; color: white;">⬆：START<br>➡：+100 Charge</p>
+        </div>
+
+        <audio id = "startsound" src="./medias/start.mp3" preload="auto"></audio> 
+        <audio id = "chargesound" src="./medias/charge.mp3" preload="auto"></audio> 
+        <audio id = "hitsound" src="./medias/hit.mp3" preload="auto"></audio>
+        <audio id = "bighitsound" src="./medias/bighit.mp3" preload="auto"></audio>
+        <audio id = "losssound" src="./medias/loss.mp3" preload="auto"></audio>
+    </div>
+
+    <div id="touchArea"></div>
+
+<script>
+    /* =========================
+    analyzer設定
+    ========================= */
+    var analyzer = null;// カード解析処理
+    
+    /*/ ↓↓↓ この変数は必要に応じて有効化 ↓↓↓ */
+    var cardConf = {
+    /*
+        'touchElement': 'touch',						// タッチを受け付ける要素(ID又は要素で指定)
+        'defaultContentsId': 'default_contents',		// 初期表示要素のID
+        'variableContentsClass': '.variable_contents',	// 動的表示切替要素のクラス
+        'elemIdPrefix': 'i',							// カード識別後、遷移ではなくコンテンツを表示する際に使用。表示要素のID属性値に指定する接頭辞で「i」を指定したなら「id="i*"」の設定された要素が表示される(*の中は1〜3の数値でカードの上側持ち手から下に向けて1,2,3となる)、HTMLパートと合わせて実装を確認して下さい
+        'willStartCollbackKey': 'start',				// カード解析処理実行直前に呼ばれるコールバックに指定するキー名
+        'onErrorCallbackKey': 'error',					// カード解析処理失敗に呼ばれるコールバックに指定するキー名
+        'okSoundElemId': 'beep_ok',						// カードタッチ成功時効果音要素のID
+        'ngSoundElemId': 'beep_ng',						// カードタッチ失敗時効果音要素のID
+        'playSound': true,								// カードタッチ後に効果音を鳴らすか否かの設定(true:鳴らす、false:鳴らさない)
+        'motionDetectNum' : [0,0,0,0,0,0,0,0],          // motion制御指定配列（配列の要素番号 0:motion制御有、1:設定なし(0 or -1固定)、2:下、3:上、4:左、5:右、6:右回転、7:左回転 の値を 閾値制御の場合 1 疑似アナログ制御の場合 2 にする。例えば、上下を閾値制御、左右回転をアナログ制御したい場合は、[2,-1,1,1,0,0,2,2]と指定する）
+        'fixPosition' : false,                          // 動作判定、タッチ方向判定時のpositionの戻り値制御、false : position=analyze.point , true : position=1 cardId = cardId + "-" + analyze.point　＊動作判定、タッチ方向判定無しの場合、true/false関係なく callbacks['1']で、cardId = ID番号となる。
+        'rotationDetect' : 0,                           // rotation判定指定配列（0:rotation判定無、1:rotation判定有、{判定有の場合、タッチパネルX座標軸の＋方向ベクトルと基準電極原点側から遠端側に向かうベクトルのなす角0°：callback.point=1、90°：2、180°：3、270°：4}とする。）
+        'cardIdNum' : [],                               // 認証判定するID = CONFV8 の全ての場合、HTMLのコールバック関数内でID一致判定すること
+    */
+        'touchWaitTime': 3000,							    // カード識別成功時に次のタッチを受け付けるまでのインターバル(msec)
+        'motionDetectNum' : [1,-1,0,1,1,0,0,0,0,0],                //motion制御指定配列（配列の要素番号 0:motion制御有、1:設定なし(-1固定)、2:下、3:上、4:左、5:右、6:右回転、7:左回転 の値を 閾値制御の場合 1 疑似アナログ制御の場合 2 にする。例えば、上下を閾値制御、左右回転をアナログ制御したい場合は、[2,1,1,0,0,2,2]と指定する）
+        //'cardIdNum' : ["S1-57","S1-107","S1-582","S1-599","S1-568","S1-536","S1-106","S1-649","S1-571","S1-96","S1-105","S1-586","S1-19"],                            //認証判定するID
+
+        'touchElement': 'touchArea',						// タッチを受け付ける要素(ID又は要素で指定)
+    };
+    /*/ ↑↑↑ この変数は必要に応じて有効化して下さい ↑↑↑ */
+
+    // カード解析時に呼ばれる処理群
+    var callbacks = {
+        /* カード解析開始直前に呼ばれる処理 */
+        'start': function() { // cardConf.willStartCollbackKey: function() {
+            console.log('start_analyze');
+            document.getElementById("startsound").play();  //スタート音を再生
+            document.getElementById("startsound").pause();  //スタート音を停止
+            document.getElementById("startsound").currentTime = 0;  //スタート音を停止
+        },
+    /* S1系カードでタッチした時に呼ばれる処理 */
+        '3': function(cardId) {                                     //上方向に移動してID認証した場合　ゲームSTOP
+            let resultData = 'RN=0, '+ cardId + ", r= " + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(2)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(2)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(2)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(2))+ ", T= " + parseFloat(_cardAnalyzer.motionAnalogOut[3].toFixed(2));
+            console.log(resultData);
+
+            document.getElementById("startsound").play();  //スタート音を再生
+            startButton.click();  //スロットマシンスタート
+
+            return true;          //{'pageCtrl': false, 'restart': true};
+        },
+        '4': function(cardId) {                                     //右方向に移動してID認証した場合
+            let resultData = 'RN=0, '+ cardId + ", r= " + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(2)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(2)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(2)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(2))+ ", T= " + parseFloat(_cardAnalyzer.motionAnalogOut[3].toFixed(2));
+            console.log(resultData);
+ 
+            document.getElementById("chargesound").play();  //チャージ音を再生
+            coins = coins + 100;    //コインを100枚追加
+            coinValue.textContent = coins;
+
+            return true;          //{'pageCtrl': false, 'restart': true};
+        },
+ 
+        '0': function(cardId){                                     //初期値取得後、カード移動中動作判定未満の場合
+
+            let resultData = 'RN=0, '+ cardId + ", r= " + parseFloat(_cardAnalyzer.touchAngleDeg.toFixed(2)) + ", X= " + parseFloat(_cardAnalyzer.motionAnalogOut[0].toFixed(2)) + ", Y= "+ parseFloat(_cardAnalyzer.motionAnalogOut[1].toFixed(2)) + ", A= " + parseFloat(_cardAnalyzer.motionAnalogOut[2].toFixed(2))+ ", T= " + parseFloat(_cardAnalyzer.motionAnalogOut[3].toFixed(2));
+            console.log(resultData);
+            return true;
+        },            
+
+        /* カード解析エラー発生時に呼ばれる処理 */
+        'error': function(errorCode, errorMessage, errorId) { // _cardConf.onErrorCallbackKey: function(errorCode, errorMessage, errorId) {
+            /* 必要に応じて処理を実装 */
+            console.log('[' + analyzer.getErrorMessage(errorCode) + ']', errorMessage, errorId," , rX= - , rY= - , rA= -");
+        }
+    };
+
+    
+    /* 即時関数で環境確認 */
+    var isPassive = false;	// パッシブ対応か否かを判定した結果を格納する
+    (function() {
+        try { 
+            var options = Object.defineProperty({}, 'passive', { get: function() { isPassive = true; } });  
+            window.addEventListener('test', options, options);  
+            window.removeEventListener('test', options, options); 
+        } catch (exception) { 
+            isPassive = false; 
+        }
+    })();
+    
+    /* 各要素展開完了時にカードタッチ待受処理開始 */
+    var readyFunc = function(e) {
+        if (typeof initCtrl !== 'undefined') {
+            analyzer = initCtrl(callbacks, cardConf);
+            //analyzer.enableScrollAction = true;// ←1本指での操作を許容する場合はコメントアウトを解除(スクロール、対象を要素にした場合はクリックイベントにも影響有り)
+        }
+        console.log(e);             //20250423
+    };
+    
+    /* 読込完了イベントを設定 */
+    (function(){
+        window.addEventListener('DOMContentLoaded', readyFunc, isPassive ? {passive: false, capture: false} : false);
+    })();
+
+    // =========================
+    // Game設定
+    // =========================
+
+    //const symbols = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
+    //const symbols = ["1", "3", "5",  "7", "9"];
+    const symbols = ["2", "4", "6", "8"];
+
+    const reels = [ document.getElementById("reel1"), document.getElementById("reel2"), document.getElementById("reel3")];
+
+    const startButton = document.getElementById("startButton");
+
+    const message = document.getElementById("message");
+
+    const coinValue = document.getElementById("coinValue");
+
+    const winEffect = document.getElementById("winEffect");
+
+    // =========================
+    // ゲーム状態
+    // =========================
+
+    let coins = 100;
+
+    let spinning = false;
+
+    let timers = [];
+
+    // =========================
+    // リールを回す
+    // =========================
+
+    function startReel(index, duration) {
+
+        return new Promise((resolve) => {
+
+            const reel = reels[index];
+            const startTime = Date.now();
+
+            // 高速表示変更
+            const timer = setInterval(() => {
+
+                const randomIndex = Math.floor(Math.random() * symbols.length);
+
+                reel.textContent = symbols[randomIndex];
+
+                // 指定時間経過
+                if (Date.now() - startTime >= duration) {
+
+                    clearInterval(timer);
+
+                    // 最終結果
+                    const randomIndex = Math.floor( Math.random() * symbols.length );
+
+                    reel.textContent = symbols[randomIndex];
+
+                    resolve( reel.textContent);
+                }
+
+            }, 70);
+
+            timers.push(timer);
+
+        });
+
+    }
+
+
+    // =========================
+    // START
+    // =========================
+
+    startButton.addEventListener("click", async () => {
+
+        // 回転中なら無視
+        if (spinning) {
+            return;
+        }
+
+        // コイン不足
+        if (coins <= 0) {
+            message.textContent = "コインがありません";
+            return;
+        }
+
+        // ゲーム開始
+        spinning = true;
+
+        startButton.disabled = true;
+
+        message.textContent = "";
+
+        // コインを1枚使う
+        coins--;
+
+        coinValue.textContent = coins;
+
+        // 3つのリールを回す
+        const result1 = startReel(0, 1500);
+
+        const result2 = startReel(1, 2200);
+
+        const result3 = startReel(2, 2900);
+
+        // 全部停止するまで待つ
+        const results = await Promise.all([ result1, result2, result3 ]);
+
+        // 結果判定
+        checkResult(results);
+
+        spinning = false;
+
+        startButton.disabled = false;
+
+    });
+
+
+    // =========================
+    // 結果判定
+    // =========================
+    function checkResult(result) {
+
+        const [a, b, c] = result;
+
+        // =========================
+        // 3つ揃った
+        // =========================
+
+        if (a === b && b === c) {
+
+            message.textContent = "🎉 JACKPOT!! 🎉";
+
+            coins += 50;
+
+            coinValue.textContent = coins;
+
+            // 当たり演出開始
+            winEffect.style.display = "flex";
+
+            document.getElementById("bighitsound").play();  //ビッグヒット音を再生
+
+            // 3秒後に消す
+            setTimeout(() => {
+                winEffect.style.display = "none";
+            }, 3000);
+        }
+
+        // =========================
+        // 2つ揃った
+        // =========================
+
+        else if ( a === b || b === c || a === c ) {
+
+            message.textContent = "✨ あたり！ ✨";
+
+            coins += 10;
+
+            coinValue.textContent = coins;
+
+            document.getElementById("hitsound").play();  //ヒット音を再生
+
+        }
+
+        // =========================
+        // ハズレ
+        // =========================
+
+        else {
+
+            message.textContent = "残念！";
+
+            coinValue.textContent = coins;
+
+            document.getElementById("losssound").play();  //ロス音を再生
+
+        }
+
+    }
+
+    function checkResultSimple(result) {
+
+        const [a, b, c] = result;
+
+        // 3つ揃った
+        if (a === b && b === c) {
+
+            message.textContent = "🎉 JACKPOT!! 🎉";
+
+            coins += 50;
+
+            document.getElementById("bighitsound").play();  //ビッグヒット音を再生
+
+        }
+
+        // 2つ揃った
+        else if ( a === b || b === c || a === c ) {
+
+            message.textContent = "✨ あたり！ ✨";
+
+            coins += 10;
+
+            document.getElementById("hitsound").play();  //ヒット音を再生
+
+        }
+
+        // ハズレ
+        else {
+
+            message.textContent = "残念！";
+
+            document.getElementById("losssound").play();  //ロス音を再生
+
+        }
+
+        coinValue.textContent = coins;
+
+    }
+
+</script>
+
+</body>
+</html>
