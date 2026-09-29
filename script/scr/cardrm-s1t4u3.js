@@ -16,6 +16,8 @@
  * 		SDK用アナライザとの共用化対応。タッチ座標解析データの5点以下のデータ取得とコンソール出力有無判定追加
  * Rev.3.0.5	20260729
  * 		タッチ座標解析データ配列touchDataArryの3次元配列化
+ * Rev.3.0.6	20260925
+ * 		touchAnalysisEnable=falseの非解析用HTMLで、cardConfとID座標変換後座標配列のコンソール出力無し
 */
 
 var Base64 = {
@@ -61,7 +63,7 @@ var Base64 = {
 
     convertConf=function(confData) {           		//cs1.js CONFV8 の decode後の文字列の変換 S1-227:(14,10):(8,8):(2,6):(8,0):(0,0):1
 
-        console.log("_cardConf= ",_cardConf);
+        //console.log("_cardConf= ",_cardConf);
 
 
         let result={};
@@ -104,7 +106,13 @@ var Base64 = {
                 }
             }
         }
-        console.log('result ', result);
+
+        if(typeof touchAnalysisEnable=== "undefined"){touchAnalysisEnable=false;}								//touchAnalysisEnable未定義HTML対応
+        if(touchAnalysisEnable){
+            console.log("_cardConf= ",_cardConf);
+            console.log('result ', result);
+        }
+
         return result;
     };
 /**

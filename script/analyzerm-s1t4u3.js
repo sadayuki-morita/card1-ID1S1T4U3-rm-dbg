@@ -46,6 +46,8 @@
  * Rev.4.0.0	20260828
  * 		動作判定に45度方向判定追加。
  * 		動作判定のOrigin IdとMotion Id の一致判定を追加。
+ * Rev.4.0.1	20260918
+ * 		 motionAnalogOut[]に、重心座標を追加。
 /**
  * 外部ファイルの読み込み
 */
@@ -125,7 +127,7 @@ var MTCardConfig = function(argument) {
 	this.rotationDetect = 0;                			   	//rotation判定指定配列（0:rotation判定無、1:rotation判定有、{判定有の場合、タッチパネルX座標軸の＋方向ベクトルと基準電極原点側から遠端側に向かうベクトルのなす角0°：callback.point=1、90°：2、180°：3、270°：4}とする。）	20250305
 	this.rotationThresholdAngle = 30;                      	//rotation判定角度閾値(unit: degree)		20250305
 
-	this.motionAnalogOut = [0,0,0,0];                       //動作変化のデルタ値(=変化量/閾値)格納 motionAnalogOut = [deltaX,deltaÝ,deltaangle,deltaTime]
+	this.motionAnalogOut = [0,0,0,0,0,0];                       //動作変化のデルタ値(=変化量/閾値),重心座標格納 motionAnalogOut = [deltaX,deltaÝ,deltaangle,deltaTime,centroidX,centroidY]	20260918
 	this.touchAngleDeg = 0;                                 //タッチ方向判定回転角		20250630
 
 //callbacksのposition戻り値制御
@@ -277,7 +279,7 @@ var Analyze = function (callback, willStart, onError) {
 		this.authOriginPoints = [],
 		this.idMotionAuth= false,        		//動作ID認証フラグ    20240820
 		this.authMotionPoints= [];
-		//motionAnalogOut= [0,0,0,0];				//移動変化量/閾値データ格納	20240905
+		//motionAnalogOut= [0,0,0,0,0,0];				//移動変化量/閾値データ格納	20240905
 		this.lastMotionAnalogOut= [];			//前イベントの移動変化量/閾値データ格納	20240906
 		this.deltaMoitonAnalogOut= [];
 
@@ -298,7 +300,7 @@ var Analyze = function (callback, willStart, onError) {
 		this.authOriginPoints = [],
 		this.idMotionAuth= false,        		//動作ID認証フラグ    20240820
 		this.authMotionPoints= [],
-		this.motionAnalogOut= [0,0,0,0];				//移動変化量/閾値データ格納	20240905
+		this.motionAnalogOut= [0,0,0,0,0,0];				//移動変化量/閾値データ、重心座標格納	20260918
 		this.lastMotionAnalogOut= [];			//前イベントの移動変化量/閾値データ格納	20240906
 		this.deltaMoitonAnalogOut= [];
 		this.touchAngleDeg = 0;                                  //タッチ回転角		20250630
@@ -407,7 +409,7 @@ var Analyze = function (callback, willStart, onError) {
 							self.authOriginPoints.push(analyzed);
 							self.idFirstAuth = true;
 							self.idMotionAuth = false; 
-							console.log("self.authOriginPoints= ",JSON.parse(JSON.stringify(self.authOriginPoints)),"timestamp=",self.authOriginPoints[0].timestamp);		//20240826
+							//console.log("self.authOriginPoints= ",JSON.parse(JSON.stringify(self.authOriginPoints)),"timestamp=",self.authOriginPoints[0].timestamp);		//20240826
 
 							analyzed.point = 0;
 
@@ -453,7 +455,7 @@ var Analyze = function (callback, willStart, onError) {
 							self.authMotionPoints=[];
 							self.authMotionPoints.push(analyzed);
 			
-							console.log("self.authMotionPoints= ",JSON.parse(JSON.stringify(self.authMotionPoints)),"timestamp=",self.authMotionPoints[0].timestamp);		//20240826
+							//console.log("self.authMotionPoints= ",JSON.parse(JSON.stringify(self.authMotionPoints)),"timestamp=",self.authMotionPoints[0].timestamp);		//20240826
 						
 							//OrgIdとMotionIdのIDが一致しているか判定			20260827 add
 							if(self.authOriginPoints[0].id === self.authMotionPoints[0].id) {
@@ -480,7 +482,7 @@ var Analyze = function (callback, willStart, onError) {
 								self.lastMotionAnalogOut=self.motionAnalogOut;
 
 								//変化量の閾値比率＝アナログ値を格納
-								self.motionAnalogOut=[deltaX/_cardConf.motionThresholdGridX, deltaY/_cardConf.motionThresholdGridY, deltaAngle/_cardConf.motionThresholdAngle, (self.authMotionPoints[0].timestamp - self.authOriginPoints[0].timestamp)];
+								self.motionAnalogOut=[deltaX/_cardConf.motionThresholdGridX, deltaY/_cardConf.motionThresholdGridY, deltaAngle/_cardConf.motionThresholdAngle, (self.authMotionPoints[0].timestamp - self.authOriginPoints[0].timestamp),self.authMotionPoints[0].centroidX,self.authMotionPoints[0].centroidY];  //アナログ値の変化量＝前回-今回、および重心座標を格納
 
 								//アナログ値の変化量＝前回-今回を格納
 								self.deltaMoitonAnalogOut=[self.lastMotionAnalogOut[0]-self.motionAnalogOut[0],self.lastMotionAnalogOut[1]-self.motionAnalogOut[1],self.lastMotionAnalogOut[2]-self.motionAnalogOut[2],-1*(self.lastMotionAnalogOut[3]-self.motionAnalogOut[3])];
@@ -552,7 +554,7 @@ var Analyze = function (callback, willStart, onError) {
 									//閾値8判定仕様　motionDetectNum[0] = 3
 									if(_cardConf.motionDetectNum[0] === 3){	
 
-										console.log("motionAnalogOut_distance",Math.hypot(self.motionAnalogOut[0], self.motionAnalogOut[1]) );
+										//console.log("motionAnalogOut_distance",Math.hypot(self.motionAnalogOut[0], self.motionAnalogOut[1]) );
 
 										if(Math.hypot(self.motionAnalogOut[0], self.motionAnalogOut[1]) > 1) {
 											const motDevSlope1 = 0.41421356237309503, motDevSlope2 = 2.414213562373095;		//motDevSlope1=tan22.5°、motDevSlope2=tan67.5°　20260804							
