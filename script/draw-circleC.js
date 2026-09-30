@@ -40,6 +40,7 @@ function drawCircle(x, y, index, color) {
     //console.log("circles: " + circles);
 }
 
+/*
 // touchmoveイベントが発生したときに呼び出される関数
 function handleTouchs(event) {
     // タッチポイント表示を消去、canvasをクリア    
@@ -90,3 +91,4 @@ if (!bindTouchListeners()) {
 
     observer.observe(document.body, { childList: true });
 }
+*/
